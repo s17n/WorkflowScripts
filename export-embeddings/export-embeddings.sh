@@ -1,16 +1,41 @@
 #!/usr/bin/env bash
 
-zkExport="$1" # "/Users/steffen/Downloads/Zk-Export"
-zkNote="$2"   # "Output/xxx/yyy.md"
-
 dirExport="attachments"
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+
+for i in "$@"
+do
+case $i in
+    -e=*|--zk-export=*)
+    zkExport="${i#*=}"
+    ;;
+    -n=*|--zk-note=*)
+    zkNote="${i#*=}"
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+done
+
+if [ "$zkExport" == "" ]; then
+	zkExport=$ZETTELKASTEN_EXPORT_DIR
+	if [ "$zkExport" == "" ]; then
+		echo "$timestamp: Zettelkasten export directory not provided and ZETTELKASTEN_EXPORT_DIR not set."
+		exit -1
+	fi
+fi
+
+if [ "$zkNote" == "" ]; then
+	echo "$timestamp: Zettelkasten note not provided."
+	exit -1
+fi
 
 mdFile="$zkExport/$zkNote"
 zkPath=${zkNote%/*}
 
-echo "$timestamp: Input Parameter: zkExport: $zkExport"
-echo "$timestamp: Input Parameter: zkNote: $zkNote"
+echo "$timestamp: Zettelkasten Export Directory: $zkExport"
+echo "$timestamp: Zettelkasten Note: $zkNote"
 echo "$timestamp: mdFile: $mdFile"
 echo "$timestamp: zkPath: $zkPath"
 
