@@ -1,6 +1,6 @@
 #@osa-lang:AppleScript
-property pLogFile : "~/Projects/WorkflowScripts/logs.txt"
-property pScriptName : "Copy Filepath as Markdown Link"
+property pLogFile : "~/Projects/WorkflowScripts/copy-file-path-as-markdown-link/execution.log"
+property pScriptName : "Copy Filepath as Markdown Link.scpt"
 
 on hazelProcessFile(theFile, inputAttributes)
 

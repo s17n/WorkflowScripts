@@ -1,14 +1,25 @@
-#!/bin/zsh
+#!/usr/bin/env bash
+
+source ~/.zettelkasten/config
 
 export LANG=en_US.UTF-8
 
-dailyDir="/Users/steffen/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/Journal"
-todayDate=$(date +"%Y-%m-%d")
-todayTime=$(date +"%H:%M")
+dailyNoteDir="$ZETTELKASTEN_VAULT_DIR/Journal"
+todaysDate=$(date +"%Y-%m-%d")
+todaysTime=$(date +"%H:%M")
 
-dailyNote=$dailyDir"/"$todayDate".md"
+dailyNote=$dailyNoteDir"/"$todaysDate".md"
 pasteboard=$(pbpaste)
 
-echo "- "$todayTime": "$pasteboard  >> $dailyNote
+dailyNoteEntry="- "$todaysTime": "$pasteboard
 
+# Start Logging 
+dirName="$(dirname "$0")"
+scriptName="add-pasteboard-to-daily-note.sh"
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
+echo "$timestamp - $scriptName: Daily Note: $dailyNote" >> $dirName/execution.log
+echo "$timestamp - $scriptName: Entry to Daily Note: $dailyNoteEntry" >> $dirName/execution.log
+# End Logging
+
+echo "$dailyNoteEntry" >> "$dailyNote"

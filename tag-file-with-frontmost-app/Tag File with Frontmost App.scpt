@@ -1,6 +1,6 @@
 #@osa-lang:AppleScript
-property pLogFile : "~/Projects/WorkflowScripts/logs.txt"
-property pScriptName : "Tag File with Frontmost App"
+property pLogFile : "~/Projects/WorkflowScripts/tag-file-with-frontmost-app/execution.log"
+property pScriptName : "Tag File with Frontmost App.scpt"
 
 on hazelProcessFile(theFile, inputAttributes)
 
