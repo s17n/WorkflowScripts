@@ -14,4 +14,4 @@ fi
 executionDate=$(date +%Y%m%d-%H%M%S)
 logFile="$dirName/logs/$executionDate.log"
 
-rsync -ai --delete --exclude="$exclude" "$sourceDir/" "$destDir" >> "$logFile"
+/opt/homebrew/bin/rsync -ai --delete --exclude="$exclude" "$sourceDir/" "$destDir" >> "$logFile"
