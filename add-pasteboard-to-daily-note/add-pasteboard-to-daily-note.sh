@@ -2,16 +2,28 @@
 
 source ~/.zettelkasten/config
 
+for i in "$@"
+do
+case $i in
+    -d=*|--dataview-key=*)
+    dataviewKey="${i#*=}"
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+done
+
 export LANG=en_US.UTF-8
 
 dailyNoteDir="$ZETTELKASTEN_VAULT_DIR/Journal"
-todaysDate=$(date +"%Y-%m-%d")
-todaysTime=$(date +"%H:%M")
+currentDate=$(date +"%Y-%m-%d")
+currentTime=$(date +"%H:%M")
 
-dailyNote=$dailyNoteDir"/"$todaysDate".md"
+dailyNote=$dailyNoteDir"/"$currentDate".md"
 pasteboard=$(pbpaste)
 
-dailyNoteEntry="- "$todaysTime": "$pasteboard
+dailyNoteEntry="- $dataviewKey:: "$currentTime": "$pasteboard
 
 # Start Logging 
 dirName="$(dirname "$0")"
