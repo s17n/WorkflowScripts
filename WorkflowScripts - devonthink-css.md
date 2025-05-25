@@ -1,6 +1,6 @@
 # DEVONthink CSS
 
-Ein angepasstes CSS für DEVONthink, welches das DEVONthink-Default-CSS minimal anpasst, um Markdown-Content einfacher, entsprechend des Default Email Message Font und der Font Size, per copy/paste übernehmen zu können. Außerdem wurde die Darstellung von Code / Codeblöcken angepasst.
+Ein minimal angepasstes CSS für DEVONthink, um Markdown-Content einfacher, d.h. passend zu den Email Message Format Einstellungen (Font & Font Size) per copy/paste übernehmen zu können. Außerdem wurde die Darstellung von Code / Codeblöcken angepasst.
 
  Um das CSS zu aktivieren, muss die folgende Zeile als ersten Zeile im Markdown-File angegeben werden:
 
