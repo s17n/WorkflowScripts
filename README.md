@@ -1,3 +1,5 @@
+# WorkflowScipts
+
 This project contains some scripts which I use in my daily workflows. 
 
 - tag-file-with-frontmost-app
@@ -7,7 +9,7 @@ This project contains some scripts which I use in my daily workflows.
 - export-embeddings
 - [[WorkflowScripts - rsync-zettelkasten.sh]]
 - [[WorkflowScripts - sleep-wake-to-file.sh]]
-- [[WorkflowScripts - create-meeting-note]]
+- [WorkflowScripts - create-meeting-note](./create-meeting-note/README.md)
 - [[WorkflowScripts - convert-link-to-markdown-link (mdl)]]
 - [[WorkflowScripts - DEVONthink - CSS]]
 
