@@ -1,3 +1,5 @@
+# Create Meeting Note
+
 Ein AppleScript-Skript zum Erstellen einer Meeting Note (nachfolgend Notiz) im Markdown-Format auf Basis eines Exchange-Kalendereintrags.
 
 Das Skript wird üblicherweise mit einer Uhrzeit (im Format `HH:MM`) aufgerufen, zu der ein Kalendereintrag existieren sollte. Üblicherweise wird als Uhrzeit der Beginn des Meetings verwendet. Das Skript ermittelt standardmäßig für den aktuellen Tag und für die angegebene Uhrzeit den entsprechenden Kalendereintrag und erstellt mit den im Kalendereintrag enthaltenen Informationen (Datum/Uhrzeit, Summary, Description, Teilnehmer, Status usw.) eine Notiz zur weiteren Bearbeitung (Mitschrift, Referenzen usw.) und Auswertung.
