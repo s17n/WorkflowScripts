@@ -1,0 +1,25 @@
+
+body {
+  font-family:"Helvetica";
+  font-size: 12px;
+  line-height: 130%;
+  background-color: transparent;
+}
+
+code {
+  font-family: Menlo,monospace;
+  font-size: 11px;
+    background-color:whitesmoke;
+    @media (prefers-color-scheme: dark) {
+      background-color: dimgrey;
+      color: white;
+    }
+}
+
+pre {
+  background-color:whitesmoke;
+  @media (prefers-color-scheme: dark) {
+    background-color: dimgrey;
+    color: white;
+  }
+}
