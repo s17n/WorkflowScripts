@@ -1,4 +1,4 @@
-This project contains some scripts which I use for in my daily workflows. 
+This project contains some scripts which I use in my daily workflows. 
 
 - tag-file-with-frontmost-app
 - copy-file-path-as-markdown-link
@@ -10,3 +10,4 @@ This project contains some scripts which I use for in my daily workflows.
 - [[WorkflowScripts - create-meeting-note]]
 - [[WorkflowScripts - convert-link-to-markdown-link (mdl)]]
 - [[WorkflowScripts - DEVONthink - CSS]]
+
