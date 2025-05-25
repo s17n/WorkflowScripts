@@ -9,7 +9,7 @@ This project contains some scripts which I use in my daily workflows.
 - export-embeddings
 - [[WorkflowScripts - rsync-zettelkasten.sh]]
 - [WorkflowScripts - sleep-wake-to-file](WorkflowScripts%20-%20sleep-wake-to-file)
-- [WorkflowScripts - create-meeting-note](WorkflowScripts%20-%20create-Meeting-note.md)
+- [WorkflowScripts - create-meeting-note](WorkflowScripts%20-%20create-meeting-note.md)
 - [[WorkflowScripts - convert-link-to-markdown-link (mdl)]]
 - [[WorkflowScripts - DEVONthink - CSS]]
 
