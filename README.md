@@ -5,6 +5,6 @@
 * export-embeddings
 * [WorkflowScripts - rsync-zettelkasten.sh](../../Zettelkasten/WorkflowScripts%20-%20rsync-zettelkasten.sh.md)
 * [WorkflowScripts - sleep-wake-to-file](WorkflowScripts%20-%20sleep-wake-to-file.md)
-* [WorkflowScripts - create-meeting-note](WorkflowScripts%20-%20create-meeting-note.md)
+* [WorkflowScripts - Create Meeting Note](WorkflowScripts%20-%20Create%20Meeting%20Note.md)
 * [WorkflowScripts - convert-link-to-markdown-link](WorkflowScripts%20-%20convert-link-to-markdown-link.md)
 * [WorkflowScripts - devonthink-css](WorkflowScripts%20-%20devonthink-css.md)

@@ -4,7 +4,12 @@ Ein AppleScript-Skript zum Erstellen einer Meeting Note (nachfolgend Notiz) im M
 
 Das Skript wird üblicherweise mit einer Uhrzeit (im Format `HH:MM`) aufgerufen, zu der ein Kalendereintrag existieren sollte. Üblicherweise wird als Uhrzeit der Beginn des Meetings verwendet. Das Skript ermittelt standardmäßig für den aktuellen Tag und für die angegebene Uhrzeit den entsprechenden Kalendereintrag und erstellt mit den im Kalendereintrag enthaltenen Informationen (Datum/Uhrzeit, Summary, Description, Teilnehmer, Status usw.) eine Notiz zur weiteren Bearbeitung (Mitschrift, Referenzen usw.) und Auswertung.
 
-Die Notiz wird im Inbox-Folder des Zettelkastens angelegt und der Dateiname (ohne Extension) wird als Wiki-Link (Format `[[ ]]`) in die Zwischenablage kopiert. Als Dateiname werden Datum und Uhrzeit (Beginn des Meetings) verwendet, z.B. `20250502-1300.md`. Falls die Notiz im Inbox-Folder bereits existiert wird nichts gemacht.
+Optional können:
+
+* Standardaufgaben in Obsidians `Task`-Syntax mit in die Notiz aufgenommen werden
+* Call-In-Informations-Blöcke aus der Description entfernt werden (Exchange generiert die z.B. automatisch in jede Meeting Description)
+
+Die Notiz wird im Inbox-Folder des Zettelkastens angelegt und der Dateiname (ohne Extension) wird als Wiki-Link (im Format `[[ ]]`) in die Zwischenablage kopiert. Als Dateiname werden Datum und Uhrzeit (Beginn des Meetings) verwendet, z.B. `20250502-1300.md`. Falls die Notiz im Inbox-Folder bereits existiert wird standardmäßig nichts gemacht.
 
 **Workflow Integration**
 
@@ -14,4 +19,4 @@ Zur nachgelagerten Auswertung mittels *Dataview* werden ausgewählte Information
 
 **Architektur**
 
-Das Skript nutzt die AppleScript Library *CalendarLib EC* für den Zugriff auf den Kalender (der Zugriff über Calendar.app dauert bis zu einer Minute!) und `gdate` für Formatierungen von Datums-Attributen (weil in AppleScript zu umständlich).
+Das Skript nutzt die AppleScript Library *CalendarLib EC* für den Zugriff auf den Kalender (der Zugriff über Calendar.app dauert bis zu einer Minute) und `gdate` für Formatierungen von Datums-Attributen (weil in AppleScript zu umständlich).
