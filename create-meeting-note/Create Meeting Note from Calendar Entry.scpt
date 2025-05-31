@@ -12,14 +12,16 @@ property pWorkflowScriptsBaseFolder : pWorkflowScriptsBaseFolder of configFile
 property pNoteHeading : pMeetingNoteHeading of configFile
 property pLastname : pLastname of configFile
 property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
-
+property pRemoveCallInBlock : pRemoveCallInBlock of configFile
+property pCallInBlockStartIdentifier : pCallInBlockStartIdentifier of configFile
+property pCallInBlockEndIdentifier : pCallInBlockEndIdentifier of configFile
 property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/execution.log"
-property pOverwriteExistingNote : pOverwriteExistingNoteDefault
+property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
 
 on run {}
 	my writeLog("run: Started")
 	set timeParam to do shell script "/opt/homebrew/bin/gdate \"+%y-%m-%d %H:%M\""
-	set timeParam to "2025-05-23 10:00"
+	set timeParam to "2025-05-30 11:00"
 	my createNoteWithTime(timeParam)
 	my writeLog("run: Finished")
 end run
@@ -144,10 +146,29 @@ on createMeetingNoteFromEvent(theEvent)
 		my writeLog("createMeetingNoteFromEvent: Create Meeting Note: " & theFQFN)
 		set content to my createContentForMeetingNote(theEventInfo, theEventAttendees)
 		do shell script "echo \"" & (content as string) & "\" > \"" & theFQFN & "\""
+		if pRemoveCallInBlock then
+			my removeCallInBlock(theFQFN)
+		end if
 	end if
 	my writeLog("createMeetingNoteFromEvent: Finished")
 	return theFQFN
 end createMeetingNoteFromEvent
+
+on removeCallInBlock(theFile)
+	my writeLog("removeCallInBlock: Started")
+
+	-- grep -n "Microsoft Teams Need help?" 20250530-1100.md | awk  -F':' ' { print $1 }'
+	set startLineNumber to do shell script "grep -n \"" & (pCallInBlockStartIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
+	set endLineNumber to do shell script "grep -n \"" & (pCallInBlockEndIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
+	set startLineNumber to startLineNumber - 1
+	set endLineNumber to endLineNumber + 1
+	set sedParameter to startLineNumber & "," & endLineNumber & "d"
+	-- sed -i -e '36,51d' 20250530-1100.md
+	my writeLog("removeCallInBlock: Remove lines: " & startLineNumber & " - " & endLineNumber & " from note: " & theFile)
+	do shell script "sed -i -e \"" & sedParameter & "\" \"" & (theFile as string) & "\""
+
+	my writeLog("removeCallInBlock: Finished")
+end removeCallInBlock
 
 on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	my writeLog("createContentForMeetingNote: Started")
@@ -193,9 +214,9 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 		& theTasks & linefeed ¬
 		& "# Termin" & linefeed & linefeed ¬
 		& "- Summary: " & theSummary & linefeed ¬
-		& "- Zeit: " & theTime & linefeed ¬
+		& "- Date: " & theTime & linefeed ¬
 		& theTeilnehmer & linefeed ¬
-		& "### Description " & linefeed & linefeed & (event_description of theEventInfo as string) & linefeed ¬
+		& "### Description " & linefeed & (event_description of theEventInfo as string) & linefeed ¬
 		& "# Mitschrift " & linefeed & linefeed & linefeed ¬
 		& "# Referenzen " & linefeed
 	my writeLog(content)

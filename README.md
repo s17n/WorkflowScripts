@@ -1,6 +1,3 @@
-# WorkflowScipts
-
-This project contains some scripts which I use in my daily workflows. 
 
 - tag-file-with-frontmost-app
 - copy-file-path-as-markdown-link
