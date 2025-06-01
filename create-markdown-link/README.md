@@ -8,7 +8,7 @@ Der Text des Markdown-Links wird anwendungsspezifisch wie folgt erstellt:
 
 * **DEVONthink:**
   * Mails: `[Datum: Autor: Betreff](x-devonthink-item://...)`
-  * Dokumente: `[Datum: Absender: Betreff]((x-devonthink-item://...)`)\`
+  * Dokumente: `[Datum: Absender: Betreff](x-devonthink-item://...)`
 * **Slack Links:** `[Slack](Slack Url)`
 * **Box Links:** `[Box://Pfad-und-Dateiname](Box Url)`
   * Achtung: Damit der Dateiname ermittelt werden kann, muss die Datei im Box-Folder im Finder selektiert sein.
