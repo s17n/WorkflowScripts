@@ -27,11 +27,11 @@ dailyNoteEntry="- $dataviewKey:: "$currentTime": "$pasteboard
 
 # Start Logging 
 dirName="$(dirname "$0")"
-scriptName="add-pasteboard-to-daily-note.sh"
+scriptName="add-clipboard-to-daily-note.sh"
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
-echo "$timestamp - $scriptName: Daily Note: $dailyNote" >> $dirName/execution.log
-echo "$timestamp - $scriptName: Entry to Daily Note: $dailyNoteEntry" >> $dirName/execution.log
+echo "$timestamp - $scriptName: Daily Note: $dailyNote" >> $dirName/logs/execution.log
+echo "$timestamp - $scriptName: Entry to Daily Note: $dailyNoteEntry" >> $dirName/logs/execution.log
 # End Logging
 
 echo "$dailyNoteEntry" >> "$dailyNote"
