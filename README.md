@@ -2,7 +2,7 @@
 
 This project contains scripts helping me to automate my daily tasks.
 
-On technical level each script can be considered as an isolated solution - with the purpose of doing one specific thing well. On functional level the real power comes with integration in daily routines / workflows.
+On technical level each script can be considered as a very specific but isolated solution - with the purpose of doing one thing well. On functional level the real power comes with integration in daily routines / workflows.
 
 ## Table of Content
 
