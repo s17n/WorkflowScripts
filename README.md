@@ -6,6 +6,7 @@ On technical level each script can be considered as a very specific but isolated
 
 ## Table of Content
 
+* [Add Clipboard to Daily Note](./add-clipboard-to-daily-note/README.md) - Adds the clipboard as new line at the end of the Daily Note
 * [Create Markdown Link](./create-markdown-link/README.md) - Create Markdown links to resources, enriched with app specific informations.
 * [Create Meeting Note](./create-meeting-note/README.md) - Creates a meeting note in Markdown format from a macOS calendar entry.
 * [DEVONthink CSS](./devonthink-css/README.md) - Custom CSS for DEVONthink to align with Mail.app message format.
