@@ -14,22 +14,80 @@ property pLogFile : pWorkflowScriptsBaseFolder & "/create-markdown-link/logs/exe
 
 on run {}
 	my writeLog("run: Started")
+	my createMarkdownLink()
+	my writeLog("run: Finished")
+end run
+
+on hazelProcessFile(theFile, inputAttributes)
+	my writeLog("hazelProcessFile: Started - theFile: " & theFile)
+
+	-- 'theFile' is an alias to the file that matched.
+	-- 'inputAttributes' is an AppleScript list of the values of any attributes you told Hazel to pass in.
+	-- Be sure to return true or false (or optionally a record) to indicate whether the file passes this script.
+
+
+	set title to "Screenshot" -- in Hazel only used for Screenshots
+	set subtitle to item 1 of inputAttributes
+
+	set prefixText to title & " - " & subtitle
+	set mdLink to createMdLinkForFileReference(prefixText, theFile)
+	set the clipboard to {text:(mdLink as string), Unicode text:mdLink}
+
+	my writeLog("hazelProcessFile: Finished - mdLink: " & mdLink)
+end hazelProcessFile
+
+on createMdLinkForFileReference(thePrefix, theFile)
+	my writeLog("createMdLinkForFileReference: Started")
+
+	set posixFile to POSIX path of theFile
+	--set posixFileUrlEncoded to my urlEncode(posixFile)
+
+	set mdLink to "[" & thePrefix & "](file://" & posixFile & ")"
+
+	my writeLog("createMdLinkForFileReference: Finished")
+	return mdLink
+end createMdLinkForFileReference
+
+on createMdLinkForSelectedFinderItem()
+	my writeLog("createMdLinkForSelectedFinderItem: Started")
+
+	tell application "Finder" to set theSelection to selection
+	set theSelectedItem to POSIX path of (item 1 of theSelection as alias)
+	--set theSelectedItemUrlEncoded to my urlEncode(theSelectedItem)
+	set theFileName to name of (item 1 of theSelection)
+	my writeLog("createMdLinkForSelectedFinderItem: theSelectedItem: " & theSelectedItem & ", theName: " & theFileName)
+
+	set mdLink to "[" & theFileName & "](file://" & theSelectedItem & ")"
+
+	my writeLog("createMdLinkForSelectedFinderItem: Started")
+	return mdLink
+end createMdLinkForSelectedFinderItem
+
+on createMarkdownLink()
+	my writeLog("createMarkdownLink: Started")
 
 	-- set theCurrentApp to name of current application
 	set theFrontmostApp to application (path to frontmost application as text) as text
 
 	set theClipboardText to (the clipboard as text)
 	set theMdLink to null
+	set theDataviewKey to null
 
 	my writeLog("run: frontmost application: " & theFrontmostApp)
 	if theFrontmostApp contains "DEVONthink" then
 		set theMdLink to my createDEVONthinkLink()
+		set theDataviewKey to "r/DEVONthink"
+	else if theFrontmostApp contains "Finder" then
+		set theMdLink to my createMdLinkForSelectedFinderItem()
+		set theDataviewKey to "r/Finder"
 	else
 		my writeLog("run: clipboard: " & theClipboardText)
 		if theClipboardText contains pBoxLinkIdentifier then
 			set theMdLink to my convertBoxLink(theClipboardText)
+			set theDataviewKey to "r/Box"
 		else if theClipboardText contains pSlackLinkIdentifier then
 			set theMdLink to my convertSlackLink(theClipboardText)
+			set theDataviewKey to "r/Slack"
 		else
 			my writeLog("run: Unknown application and link format")
 		end if
@@ -37,10 +95,27 @@ on run {}
 
 	if theMdLink is not null then
 		set the clipboard to {text:(theMdLink as string), Unicode text:theMdLink}
+		do shell script "echo \"" & theDataviewKey & "\" > " & pWorkflowScriptsBaseFolder & "/.current-dataview-key"
 	end if
-	my writeLog("run: Finished")
+	my writeLog("createMarkdownLink: Finished - mdLink: " & theMdLink)
 
-end run
+end createMarkdownLink
+
+
+on urlEncode(str)
+	my writeLog("urlEncode: Stared")
+	local str
+	local strEncoded
+	try
+		set strEncoded to (do shell script "/bin/echo " & quoted form of str & ¬
+			" | perl -MURI::Escape -lne 'print uri_escape($_)'")
+	on error eMsg number eNum
+		error "Can't urlEncode: " & eMsg number eNum
+	end try
+	my writeLog("urlEncode: Finished")
+	return strEncoded
+end urlEncode
+
 
 on createDEVONthinkLink()
 	my writeLog("createDEVONthinkLink: Started")
@@ -82,3 +157,4 @@ on writeLog(theMessage)
 	set timestamp to do shell script "date \"+%Y-%m-%d %H:%M:%S\""
 	do shell script "echo \"" & timestamp & ": " & pScriptName & ": " & theMessage & "\" >> " & pLogFile
 end writeLog
+
