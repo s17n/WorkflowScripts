@@ -1,6 +1,6 @@
 # WorkflowScripts
 
-This project contains scripts helping me to automate my daily tasks.
+This project contains small scripts helping me to automate some of my daily tasks. While [MailScripts](https://github.com/s17n/MailScripts) is focused on document-centric tasks around DEVONthink this projects is more about information management tasks in general with Obsidian-supported characteristics.
 
 On technical level each script can be considered as a very specific but isolated solution - with the purpose of doing one thing well. On functional level the real power comes with integration in daily routines / workflows.
 
