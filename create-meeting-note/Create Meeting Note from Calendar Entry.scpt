@@ -15,7 +15,7 @@ property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
 property pRemoveCallInBlock : pRemoveCallInBlock of configFile
 property pCallInBlockStartIdentifier : pCallInBlockStartIdentifier of configFile
 property pCallInBlockEndIdentifier : pCallInBlockEndIdentifier of configFile
-property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/execution.log"
+property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/logs/execution.log"
 property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
 
 on run {}
