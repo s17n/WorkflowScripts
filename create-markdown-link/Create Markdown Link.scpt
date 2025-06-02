@@ -77,7 +77,7 @@ on createMarkdownLink()
 	if theFrontmostApp contains "DEVONthink" then
 		set theMdLink to my createDEVONthinkLink()
 		set theDataviewKey to "r/DEVONthink"
-	else if theFrontmostApp contains "Finder" then
+	else if theFrontmostApp contains "Finder" and theClipboardText does not contain pBoxLinkIdentifier then
 		set theMdLink to my createMdLinkForSelectedFinderItem()
 		set theDataviewKey to "r/Finder"
 	else
