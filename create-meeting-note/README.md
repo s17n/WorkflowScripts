@@ -27,8 +27,8 @@ Das Skript nutzt die AppleScript Library *CalendarLib EC* für den Zugriff auf d
 
 ### Privacy & Security Settings
 
-Jeder Anwendung über die die das Skript startet wird - üblicherweise sind das der Script Editor und PopClip -  muss Zugriff auf den Kalender gewährt werden. Die entsprechende Einstellung ist zu finden unter:  > System Settings... > Privacy & Security > Calendars. Hier muss jeder Anwendung "Full Access" auf den Kalender gewährt werden.
+Jede Anwendung über die das Skript startet wird - üblicherweise sind das der Script Editor und PopClip -  muss vollen Zugriff auf den macOS Kalender besitzen. Die entsprechenden Einstellungen können hier vorgenommen werden:  > System Settings... > Privacy & Security > Calendars.
 
 ### Bekannte Probleme
 
-In unregelmäßigen Abständen - meist nach System Updates, manchmal leider aber auch ohne diese - läuft das Script, wenn es über PopClip gestartet wird, in einen Fehler und bleibt bei `fetch events` hängen. In diesem Fall hilft es in der Regeln in: macOS Settings > Privacy & Security > Calendars > PopClip den Zugriff auf den Kalender einmal komplett zu verbieten und anschließend wieder zu erlauben.
+In unregelmäßigen Abständen - meist nach System Updates, manchmal leider aber auch ohne diese - läuft das Script, wenn es über PopClip gestartet wird, in einen Fehler und bleibt bei `fetch events` hängen. In diesem Fall hilft es in der Regel den Zugriff auf den Kalender einmal komplett zu verbieten und anschließend wieder zu erlauben (siehe „Privacy & Security Settings“).
