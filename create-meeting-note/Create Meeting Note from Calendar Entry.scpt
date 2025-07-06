@@ -9,7 +9,7 @@ property pScriptName : "Create Meeting Note from Calendar Entry.scpt"
 property configFile : load script (POSIX path of (path to home folder) & ".workflowscripts/config.scpt")
 property pInboxFolder : pZettelkastenInboxFolder of configFile
 property pWorkflowScriptsBaseFolder : pWorkflowScriptsBaseFolder of configFile
-property pNoteHeading : pMeetingNoteHeading of configFile
+property pMeetingNoteHeading : pMeetingNoteHeading of configFile
 property pLastname : pLastname of configFile
 property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
 property pRemoveCallInBlock : pRemoveCallInBlock of configFile
@@ -17,35 +17,6 @@ property pCallInBlockStartIdentifier : pCallInBlockStartIdentifier of configFile
 property pCallInBlockEndIdentifier : pCallInBlockEndIdentifier of configFile
 property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/logs/execution.log"
 property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
-
-on run {}
-	my writeLog("run: Started")
-	set timeParam to do shell script "/opt/homebrew/bin/gdate \"+%y-%m-%d %H:%M\""
-	set timeParam to "2025-05-30 11:00"
-	my createNoteWithTime(timeParam)
-	my writeLog("run: Finished")
-end run
-
--- Ermittelt für die angegebene Zeit den passenden Kalendereintrag und erstellt mit den Daten
--- des Kalendereintrags eine Meeting Note im Inbox Folder des Zettelkastens.
--- Wird nur eine Uhrzeit übergeben, dann wird als Datum das aktuelle Systemdatum verwendet.
--- Der Aufruf erfolgt überlicherweise aus der Daily Note heraus mittels PopClip.
--- Parameter:
---   timeParam - im Format "HH:MM" oder "YYYY-mm-dd HH:MM"
-on createNoteWithTime(timeParam)
-	my writeLog("createNoteWithTime: Started - timeParam: " & timeParam)
-
-	set dateFragment to null
-	if length of timeParam is 16 then
-		set dateTimeParam to timeParam
-	else
-		set dateFragment to do shell script "/opt/homebrew/bin/gdate \"+%Y-%m-%d\""
-		set dateTimeParam to dateFragment & " " & timeParam
-	end if
-	my fetchEventAndCreateNote(dateTimeParam)
-
-	my writeLog("createNoteWithTime: Finished - dateTimeParam: " & dateTimeParam)
-end createNoteWithTime
 
 on hazelProcessFile(theFile, inputAttributes)
 	my writeLog("hazelProcessFile: " & POSIX file theFile)
@@ -58,71 +29,141 @@ on hazelProcessFile(theFile, inputAttributes)
 	return {hazelOutputAttributes:{filename}}
 end hazelProcessFile
 
--- Ermittelt das Meeting (Event) aus dem Kalender und delegiert das Erstellen der Note.
--- Wenn kein Event ermittelt werden kann, wird eine Meldung im Log ausgegeben.
--- Parameter:
---   dateFragment - im Format "yy-MM-dd hh:mm"
--- Return:
---   filenameOfMeetingNote - aktuell nur für Hazel relevant
-on fetchEventAndCreateNote(dateFragment)
-	my writeLog("fetchEventAndCreateNote: Started - dateFragment: " & dateFragment)
+on run {}
+	my writeLog("run: Started")
 
-	set theFilenameOfMeetingNote to null
-	set fetchStartFragment to text items 1 thru 10 of dateFragment & " 00:00"
-	set fetchEndFragment to text items 1 thru 10 of dateFragment & " 23:59"
+	set theDateTime to do shell script "/opt/homebrew/bin/gdate \"+%Y-%m-%d\""
+	set theResult to display dialog "Datum & Uhrzeit (Beginn des Meetings) zu der eine Meeting Note erstellt werden soll (Format: YYYY-mm-dd hh:mm):" buttons {"List Meetings", "Cancel", "Create"} default answer theDateTime default button 1
 
-	set theDate to my convertDateStringToISO8601Date(dateFragment)
-	set fetchStartDate to my convertDateStringToISO8601Date(fetchStartFragment)
-	set fetchEndDate to my convertDateStringToISO8601Date(fetchEndFragment)
+	set theDateTime to text returned of theResult
+	if button returned of theResult is "List Meetings" then
+		set allEventsOfDayResult to my fetchEventsByDay(theDateTime)
+		set theEvents to item 1 of allEventsOfDayResult
+		set theListOfEvents to item 2 of allEventsOfDayResult
+		set theSelectedEvent to choose from list theListOfEvents
+		if theSelectedEvent is not false then
+			set theEvent to my getEventByListEntry(theEvents, theSelectedEvent)
+			set theFilenameOfMeetingNote to my createNoteFromEvent(theEvent)
+			my setClipboard(theEvent)
+		end if
 
-	set theEvent to my fetchEvent(fetchStartDate, fetchEndDate, theDate)
-	if theEvent is not null then
-		set theFilenameOfMeetingNote to my createMeetingNoteFromEvent(theEvent)
-	else
-		my writeLog("fetchEventAndCreateNote: No Meeting Note created because no event was found for the given date/time.")
+	else if button returned of theResult is "Create" then
+		my createNoteFromDateTime(theDateTime)
+
 	end if
 
-	my writeLog("fetchEventAndCreateNote: Finished - filenameOfMeetingNote: " & theFilenameOfMeetingNote)
-	return theFilenameOfMeetingNote
-end fetchEventAndCreateNote
+	my writeLog("run: Finished")
+end run
 
-on fetchEvent(fetchStartDate, fetchEndDate, theDate)
 
-	try
-		my writeLog("fetchEvent: Started - fetchStartDate: " & fetchStartDate & ", fetchEndDate: " & fetchEndDate & ", theDate: " & theDate)
+-- Ermittelt für die angegebene Zeit den passenden Kalendereintrag und erstellt mit den Daten
+-- des Kalendereintrags eine Meeting Note im Inbox Folder des Zettelkastens.
+-- Wird nur eine Uhrzeit übergeben, dann wird als Datum das aktuelle Systemdatum verwendet.
+-- Der Aufruf erfolgt überlicherweise aus der Daily Note heraus mittels PopClip.
+-- Parameter:
+--   timeParam - im Format "HH:MM" oder "YYYY-mm-dd HH:MM"
+on createNoteFromDateTime(theDateTime)
+	my writeLog("createNoteFromDateTime: Started - theDateTime: " & theDateTime)
 
-		set theStore to fetch store
-		set theCal to fetch calendar "Calendar" cal type cal exchange event store theStore -- change to suit
-		set theEvents to fetch events starting date fetchStartDate ending date fetchEndDate searching cals {theCal} event store theStore
+	if not length of theDateTime is 16 then
+		set theDay to do shell script "/opt/homebrew/bin/gdate \"+%Y-%m-%d\""
+		set theDateTime to theDay & " " & theDateTime
+	end if
+	set theDay to text items 1 thru 10 of theDateTime
 
-		set theEvent to null
-		if length of theEvents > 0 then
-			my writeLog("fetchEvent: Events found: " & length of theEvents)
-			repeat with anEvent in theEvents
-				set anEventInfo to event info for event anEvent
-				-- my writeLog("run: Fetch events - event #" & i & ":  " & my eventInfoSummary(theEventInfo))
-				set startDate to event_start_date of anEventInfo
-				set endDate to event_end_date of anEventInfo
-				if startDate is less than or equal to theDate and endDate is greater than theDate then
-					my writeLog("fetchEvent: Found matching event:  " & my eventInfoSummary(anEventInfo))
-					set theEvent to anEvent
-				end if
-			end repeat
-		else
-			my writeLog("fetchEvent: No events found.")
+	set allEventsOfDayResult to my fetchEventsByDay(theDay)
+	set theEvents to item 1 of allEventsOfDayResult
+	set theEvent to my getEventByTime(theEvents, theDateTime)
+	if theEvent is not null then
+		set theFilenameOfMeetingNote to my createMeetingNoteFromEvent(theEvent)
+	end if
+	my writeLog("createNoteFromDateTime: Finished")
+end createNoteFromDateTime
+
+on getEventByListEntry(theEvents, theSelectedEvent)
+	my writeLog("getEventByListEntry: Started")
+
+	set theEvent to null
+	repeat with anEvent in theEvents
+		set eventEntryString to my eventEntry(anEvent)
+		if (eventEntryString as string) is equal to (theSelectedEvent as string) then
+			set theEvent to anEvent
 		end if
-		my writeLog("fetchEvent: Finsihed")
+	end repeat
 
-		return theEvent
-	on error errStr number errorNumber
-		error errStr number errorNumber
-	end try
-end fetchEvent
+	my writeLog("getEventByListEntry: Finished")
+	return theEvent
+end getEventByListEntry
 
--- Erstellt eine Notiz für ein Meeting. Das Meeting muss zur angegebenen Uhrzeit im Exchange Kalender stehen.
---
-on createMeetingNoteFromEvent(theEvent)
-	my writeLog("createMeetingNoteFromEvent: Started")
+on getEventByTime(theEvents, theDateTime)
+	my writeLog("getEventByTime: Started")
+
+	set theDateTimeInISO to my convertDateStringToISO8601Date(theDateTime)
+	set theEvent to null
+
+	repeat with anEvent in theEvents
+		set anEventInfo to event info for event anEvent
+		set startDate to event_start_date of anEventInfo
+		set endDate to event_end_date of anEventInfo
+		if startDate is less than or equal to theDateTimeInISO and endDate is greater than theDateTimeInISO then
+			my writeLog("getEventByTime: Found matching event:  " & my eventInfoSummary(anEventInfo))
+			set theEvent to anEvent
+		end if
+	end repeat
+
+	my writeLog("getEventByTime: Finished")
+	return theEvent
+end getEventByTime
+
+on fetchEventsByDay(theDay)
+	my writeLog("fetchEventsByDay: Started - theDay: " & theDay)
+
+	set fetchStartDate to my convertDateStringToISO8601Date((theDay as text) & " 00:00")
+	set fetchEndDate to my convertDateStringToISO8601Date((theDay as text) & " 23:59")
+	set theStore to fetch store
+	set theCal to fetch calendar "Calendar" cal type cal exchange event store theStore -- change to suit
+	set theEvents to fetch events starting date fetchStartDate ending date fetchEndDate searching cals {theCal} event store theStore
+
+	set theEventsList to {}
+	if length of theEvents > 0 then
+		repeat with anEvent in theEvents
+			set end of theEventsList to my eventEntry(anEvent)
+		end repeat
+	end if
+
+	my writeLog("fetchEventsByDay: Finished")
+	return {theEvents, theEventsList}
+end fetchEventsByDay
+
+on eventEntry(theEvent)
+	my writeLog("eventEntry: Started")
+
+	set theEventInfo to event info for event theEvent
+	set theEventSummary to (event_summary of theEventInfo as string)
+	set startDate to event_start_date of theEventInfo
+	set endDate to event_end_date of theEventInfo
+
+	set startDateAsString to my formatASDate(event_start_date of theEventInfo, "%H:%M")
+	set endDateAsString to my formatASDate(event_end_date of theEventInfo, "%H:%M")
+
+	my writeLog("eventEntry: Finished")
+	return (startDateAsString as string) & " - " & (endDateAsString) & ": " & theEventSummary
+end eventEntry
+
+on setClipboard(theEvent)
+	my writeLog("setClipboard: Started")
+
+	set theEventInfo to event info for event theEvent
+	set startDateAsString to my formatASDate(event_start_date of theEventInfo, "%H:%M")
+	set endDateAsString to my formatASDate(event_end_date of theEventInfo, "%H:%M")
+	set theFilename to my formatASDate(event_start_date of theEventInfo, "%Y%m%d-%H%M")
+	set the clipboard to startDateAsString & " - " & endDateAsString & " [[" & theFilename & "]]"
+
+	my writeLog("setClipboard: Finished")
+end setClipboard
+
+on createNoteFromEvent(theEvent)
+	my writeLog("createNoteFromEvent: Started")
 
 	set theEventInfo to event info for event theEvent
 	set theEventAttendees to null
@@ -130,7 +171,7 @@ on createMeetingNoteFromEvent(theEvent)
 		set theEventAttendees to event attendees for event theEvent
 	on error errStr number errorNumber
 		if errorNumber = -10000 then
-			my writeLog("createMeetingNoteFromEvent: Bekannter Fehler bei Aufruf von 'event attendees for event' -> wird ignoriert")
+			my writeLog("createNoteFromEvent: Bekannter Fehler bei Aufruf von 'event attendees for event' -> wird ignoriert")
 		else
 			error errStr number errorNumber
 		end if
@@ -141,18 +182,18 @@ on createMeetingNoteFromEvent(theEvent)
 	set the clipboard to "[[" & theFilename & "]]"
 
 	if my FileExists(theFQFN) and not pOverwriteExistingNote then
-		my writeLog("createMeetingNoteFromEvent: Meeting Note already exists.")
+		my writeLog("createNoteFromEvent: Meeting Note already exists.")
 	else
-		my writeLog("createMeetingNoteFromEvent: Create Meeting Note: " & theFQFN)
+		my writeLog("createNoteFromEvent: Create Meeting Note: " & theFQFN)
 		set content to my createContentForMeetingNote(theEventInfo, theEventAttendees)
-		do shell script "echo \"" & (content as string) & "\" > \"" & theFQFN & "\""
+		do shell script "echo " & quoted form of content & " > \"" & theFQFN & "\""
 		if pRemoveCallInBlock then
 			my removeCallInBlock(theFQFN)
 		end if
 	end if
-	my writeLog("createMeetingNoteFromEvent: Finished")
+	my writeLog("createNoteFromEvent: Finished")
 	return theFQFN
-end createMeetingNoteFromEvent
+end createNoteFromEvent
 
 on removeCallInBlock(theFile)
 	my writeLog("removeCallInBlock: Started")
@@ -165,13 +206,14 @@ on removeCallInBlock(theFile)
 	set sedParameter to startLineNumber & "," & endLineNumber & "d"
 	-- sed -i -e '36,51d' 20250530-1100.md
 	my writeLog("removeCallInBlock: Remove lines: " & startLineNumber & " - " & endLineNumber & " from note: " & theFile)
-	do shell script "sed -i -e \"" & sedParameter & "\" \"" & (theFile as string) & "\""
+	do shell script "sed -i '' -e \"" & sedParameter & "\" \"" & (theFile as string) & "\""
 
 	my writeLog("removeCallInBlock: Finished")
 end removeCallInBlock
 
 on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	my writeLog("createContentForMeetingNote: Started")
+	set theChair to "n/a"
 	set {content, theTeilnehmer, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther} to {"", "(nicht ermittelbar)", 0, 0, 0, 0, 0}
 	if theEventAttendees is not null then
 		set theResult to my createAttendeesList(theEventAttendees)
@@ -204,19 +246,20 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	set fm to fm & "  attendees_other: " & numberOther & linefeed
 	set fm to fm & "---" & linefeed
 
-	set theTasks to "- [ ] Meeting Note erstellen für: " & theSummary & " bis: 🗓️" & theDay & linefeed
-	if theChair contains pLastname then
-		set theTasks to theTasks & "- [ ] Protokoll verteilen für: " & theSummary & " bis: 🗓️" & theDay
+	set theTasks to "- [ ] Notes erstellen bis: 🗓️" & theDay & linefeed
+	if theChair is not null and theChair contains pLastname then
+		set theTasks to theTasks & "- [ ] Protokoll verteilen bis: 🗓️" & theDay
 	end if
 	set content to fm
-	set content to content & pNoteHeading & linefeed ¬
+	set content to content & pMeetingNoteHeading & linefeed ¬
 		& "# Todos" & linefeed & linefeed ¬
 		& theTasks & linefeed ¬
 		& "# Termin" & linefeed & linefeed ¬
 		& "- Summary: " & theSummary & linefeed ¬
 		& "- Date: " & theTime & linefeed ¬
 		& theTeilnehmer & linefeed ¬
-		& "### Description " & linefeed & (event_description of theEventInfo as string) & linefeed ¬
+		& "**fett:** anwesend" & linefeed ¬
+		& "### Description " & linefeed & linefeed & (event_description of theEventInfo as string) & linefeed ¬
 		& "# Mitschrift " & linefeed & linefeed & linefeed ¬
 		& "# Referenzen " & linefeed
 	my writeLog(content)
@@ -346,7 +389,7 @@ on FileExists(theFile) -- (String) as Boolean
 end FileExists
 
 on formatASDate(theDate, theFormat)
-	my writeLog("formatASDate: Started")
+	-- my writeLog("formatASDate: Started")
 
 	set {year:y, month:m, day:d, hours:h, minutes:min} to theDate
 	set min_str to text -1 thru -2 of ("00" & min)
@@ -354,12 +397,12 @@ on formatASDate(theDate, theFormat)
 	set day_str to text -1 thru -2 of ("00" & d)
 	set mon_str to text -1 thru -2 of ("00" & (m * 1))
 	set theNormalizedDateAsString to y & "-" & mon_str & "-" & day_str & " " & hours_str & ":" & min_str
-	my writeLog("formatASDate: theDateAsString: " & theNormalizedDateAsString)
+	-- my writeLog("formatASDate: theDateAsString: " & theNormalizedDateAsString)
 
 	set theFormatedDateAsString to do shell script "/opt/homebrew/bin/gdate -d\"" & theNormalizedDateAsString & "\"  +\"" & theFormat & "\" "
-	my writeLog("formatASDate: Finished theFormatedDateAsString: " & theFormatedDateAsString)
+	-- my writeLog("formatASDate: Finished theFormatedDateAsString: " & theFormatedDateAsString)
 
-	my writeLog("formatASDate: Finished")
+	-- my writeLog("formatASDate: Finished")
 	return theFormatedDateAsString
 
 end formatASDate
@@ -381,6 +424,7 @@ end convertDateStringToISO8601Date
 
 on writeLog(theMessage)
 	set timestamp to do shell script "date \"+%Y-%m-%d %H:%M:%S\""
-	do shell script "echo \"" & timestamp & ": " & pScriptName & ": " & theMessage & "\" >> " & pLogFile
+	set msg to timestamp & ": " & pScriptName & ": " & theMessage
+	do shell script "echo " & quoted form of msg & " >> " & pLogFile
 end writeLog
 
