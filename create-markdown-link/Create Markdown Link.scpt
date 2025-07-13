@@ -25,15 +25,16 @@ on hazelProcessFile(theFile, inputAttributes)
 	-- 'inputAttributes' is an AppleScript list of the values of any attributes you told Hazel to pass in.
 	-- Be sure to return true or false (or optionally a record) to indicate whether the file passes this script.
 
+	set workflowContentType to item 1 of inputAttributes
+	set appName to item 2 of inputAttributes
+	my writeLog("hazelProcessFile: workflowContentType: " & workflowContentType & ", appName: " & appName)
 
-	set title to "Screenshot" -- in Hazel only used for Screenshots
-	set subtitle to item 1 of inputAttributes
-
-	set prefixText to title & " - " & subtitle
-	set mdLink to createMdLinkForFileReference(prefixText, theFile)
-	set the clipboard to {text:(mdLink as string), Unicode text:mdLink}
+	set mdLinkText to workflowContentType & " - " & appName
+	set mdLink to createMdLinkForFileReference(mdLinkText, theFile)
+	-- set the clipboard to {text:(mdLink as string), Unicode text:mdLink}
 
 	my writeLog("hazelProcessFile: Finished - mdLink: " & mdLink)
+	return {hazelOutputAttributes:{mdLink:(mdLink as string)}}
 end hazelProcessFile
 
 on createMdLinkForFileReference(thePrefix, theFile)
@@ -76,18 +77,18 @@ on createMarkdownLink()
 	my writeLog("run: frontmost application: " & theFrontmostApp)
 	if theFrontmostApp contains "DEVONthink" then
 		set theMdLink to my createDEVONthinkLink()
-		set theDataviewKey to "r/DEVONthink"
+		set theDataviewKey to ""
 	else if theFrontmostApp contains "Finder" and theClipboardText does not contain pBoxLinkIdentifier then
 		set theMdLink to my createMdLinkForSelectedFinderItem()
-		set theDataviewKey to "r/Finder"
+		set theDataviewKey to "File"
 	else
 		my writeLog("run: clipboard: " & theClipboardText)
 		if theClipboardText contains pBoxLinkIdentifier then
 			set theMdLink to my convertBoxLink(theClipboardText)
-			set theDataviewKey to "r/Box"
+			set theDataviewKey to "Box"
 		else if theClipboardText contains pSlackLinkIdentifier then
 			set theMdLink to my convertSlackLink(theClipboardText)
-			set theDataviewKey to "r/Slack"
+			set theDataviewKey to "Slack"
 		else
 			my writeLog("run: Unknown application and link format")
 		end if
