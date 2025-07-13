@@ -4,7 +4,7 @@
 --
 property pZettelkastenInboxFolder : "[Full qualified path to Zettelkasten Inbox folder]"
 
-property pWorkflowScriptsBaseFolder : "~/Projects/WorkflowScripts"
+property pWorkflowScriptsBaseFolder : "[Full qualified path to WorkflowScripts folder]"
 property pMeetingNoteHeading : "Diese Notiz wurde am \\`$=dv.current().file.ctime\\` erstellt und am \\`$=dv.current().file.mtime\\` zuletzt geändert."
 property pLastname : "[Name of the meeting attendee that will be considered as chair]"
 property pRemoveCallInBlock : false
