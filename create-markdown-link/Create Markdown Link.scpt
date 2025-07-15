@@ -78,9 +78,9 @@ on createMarkdownLink()
 	if theFrontmostApp contains "DEVONthink" then
 		set theMdLink to my createDEVONthinkLink()
 		set theDataviewKey to ""
-	else if theFrontmostApp contains "Finder" and theClipboardText does not contain pBoxLinkIdentifier then
+	else if theFrontmostApp contains "Finder" then
 		set theMdLink to my createMdLinkForSelectedFinderItem()
-		set theDataviewKey to "File"
+		set theDataviewKey to ""
 	else
 		my writeLog("run: clipboard: " & theClipboardText)
 		if theClipboardText contains pBoxLinkIdentifier then
@@ -153,6 +153,38 @@ on convertBoxLink(theClipboardText)
 
 	end tell
 end convertBoxLink
+
+on copySharedBoxLinkAsMarkdownLink()
+	my writeLog("copySharedBoxLinkAsMarkdownLink: Started")
+
+	set maxTimeInSec to 5
+	set intervalInSec to 0.25
+	set elapsedInSec to 0
+	set exitLoop to false
+
+	set the clipboard to ""
+
+	tell application "System Events"
+		keystroke return using {control down}
+		keystroke "Copy shared link"
+		keystroke return
+	end tell
+
+	repeat until elapsedInSec ≥ maxTimeInSec or exitLoop is true
+		delay intervalInSec
+		set theClipboardText to (the clipboard as text)
+		if theClipboardText contains pBoxLinkIdentifier then
+			set mdLink to my convertBoxLink(theClipboardText)
+			set the clipboard to mdLink
+			set exitLoop to true
+		else
+			set elapsedInSec to elapsedInSec + intervalInSec
+		end if
+	end repeat
+
+	my writeLog("copySharedBoxLinkAsMarkdownLink: elapsedInSec: " & elapsedInSec & ", mdLink: " & mdLink)
+	my writeLog("copySharedBoxLinkAsMarkdownLink: Finished")
+end copySharedBoxLinkAsMarkdownLink
 
 on writeLog(theMessage)
 	set timestamp to do shell script "date \"+%Y-%m-%d %H:%M:%S\""
