@@ -52,13 +52,24 @@ end createMdLinkForFileReference
 on createMdLinkForSelectedFinderItem()
 	my writeLog("createMdLinkForSelectedFinderItem: Started")
 
-	tell application "Finder" to set theSelection to selection
-	set theSelectedItem to POSIX path of (item 1 of theSelection as alias)
-	--set theSelectedItemUrlEncoded to my urlEncode(theSelectedItem)
-	set theFileName to name of (item 1 of theSelection)
-	my writeLog("createMdLinkForSelectedFinderItem: theSelectedItem: " & theSelectedItem & ", theName: " & theFileName)
+	tell application "Finder"
+		set sel to selection
+		if sel is {} then error "Keine Datei im Finder ausgewählt."
+		set theAlias to item 1 of sel as alias
+		set theFileName to name of item 1 of sel
+	end tell
 
-	set mdLink to "[" & theFileName & "](file://" & theSelectedItem & ")"
+	-- POSIX-Pfad holen
+	set posixPath to POSIX path of theAlias
+
+	-- Ganzen Pfad URL-codieren
+	set encodedPath to do shell script "python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' " & quoted form of posixPath
+
+	-- file://-URL bauen
+	set theSelectedItem to "file://" & encodedPath
+
+	-- Markdown Link bauen
+	set mdLink to "[" & theFileName & "](" & theSelectedItem & ")"
 
 	my writeLog("createMdLinkForSelectedFinderItem: Started")
 	return mdLink
