@@ -298,8 +298,8 @@ on cleanMeetingDescription(theDescription, trimMarkers)
 		set markerText to marker as string
 		if markerText is not "" then
 			set foundRange to (nsDescription's rangeOfString:markerText options:(current application's NSCaseInsensitiveSearch))
-			set foundLocation to foundRange's location() as integer
-			if foundLocation is not (current application's NSNotFound) then
+			if (foundRange's |length|() as integer) > 0 then
+				set foundLocation to foundRange's location() as number
 				if firstMarkerLocation is missing value or foundLocation < firstMarkerLocation then
 					set firstMarkerLocation to foundLocation
 				end if
