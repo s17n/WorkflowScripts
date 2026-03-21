@@ -10,7 +10,7 @@ property pBoxMdLinkPrefix : pBoxMdLinkPrefix of configFile
 
 property pSlackLinkIdentifier : pSlackLinkIdentifier of configFile
 property pDevonthinkCopyItemLinkScript : pMailScriptsBaseFolder & "/DEVONthink Menu/Copy Item Link as Markdown Link.scpt"
-property pLogFile : pWorkflowScriptsBaseFolder & "/create-markdown-link/logs/execution.log"
+property pLogFile : pWorkflowScriptsBaseFolder & "/logs/execution.log"
 
 on run {}
 	my writeLog("run: Started")
@@ -19,19 +19,23 @@ on run {}
 end run
 
 on hazelProcessFile(theFile, inputAttributes)
-	my writeLog("hazelProcessFile: Started - theFile: " & theFile)
+	my writeLog("hazelProcessFile: Started > theFile: " & theFile)
 
 	-- 'theFile' is an alias to the file that matched.
 	-- 'inputAttributes' is an AppleScript list of the values of any attributes you told Hazel to pass in.
 	-- Be sure to return true or false (or optionally a record) to indicate whether the file passes this script.
+	set {type, datetime} to {missing value, missing value}
 
-	set workflowContentType to item 1 of inputAttributes
-	set appName to item 2 of inputAttributes
-	my writeLog("hazelProcessFile: workflowContentType: " & workflowContentType & ", appName: " & appName)
+	try
+		set type to item 1 of inputAttributes
+	end try
+	try
+		set datetime to item 2 of inputAttributes
+	end try
+	my writeLog("hazelProcessFile: type: " & type & ", datetime: " & datetime)
 
-	set mdLinkText to workflowContentType & " - " & appName
+	set mdLinkText to datetime
 	set mdLink to createMdLinkForFileReference(mdLinkText, theFile)
-	-- set the clipboard to {text:(mdLink as string), Unicode text:mdLink}
 
 	my writeLog("hazelProcessFile: Finished - mdLink: " & mdLink)
 	return {hazelOutputAttributes:{mdLink:(mdLink as string)}}
@@ -41,7 +45,6 @@ on createMdLinkForFileReference(thePrefix, theFile)
 	my writeLog("createMdLinkForFileReference: Started")
 
 	set posixFile to POSIX path of theFile
-	--set posixFileUrlEncoded to my urlEncode(posixFile)
 
 	set mdLink to "[" & thePrefix & "](file://" & posixFile & ")"
 

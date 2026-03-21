@@ -1,13 +1,61 @@
 # WorkflowScripts
 
-This project contains small scripts helping me to automate some of my daily tasks. While [MailScripts](https://github.com/s17n/MailScripts) is focused on document-centric tasks around DEVONthink this projects is more about information management tasks in general with Obsidian-supported characteristics.
+Collection of small macOS automation scripts for daily information workflows
+with Obsidian, DEVONthink, Finder, and Calendar.
 
-On technical level each script can be considered as a very specific but isolated solution - with the purpose of doing one thing well. On functional level the real power comes with integration in daily routines / workflows.
+Compared to [MailScripts](https://github.com/s17n/MailScripts), this repository
+is broader and focused on information management workflows in general.
 
-## Table of Content
+Each script is intentionally small and isolated. The value comes from combining
+them in recurring routines (Quick Actions, PopClip, LaunchBar, cron, etc.).
 
-* [Add Clipboard to Daily Note](./add-clipboard-to-daily-note/README.md) - Adds the clipboard as new line at the end of the Daily Note
-* [Create Markdown Link](./create-markdown-link/README.md) - Create Markdown links to resources, enriched with app specific informations.
-* [Create Meeting Note](./create-meeting-note/README.md) - Creates a meeting note in Markdown format from a macOS calendar entry.
-* [DEVONthink CSS](./devonthink-css/README.md) - Custom CSS for DEVONthink to align with Mail.app message format.
-* [Sleep Wake to File](./sleep-wake-to-file/README.md) - Exports sleep/wake event from `pmset` to file for downstream analysis tasks.
+## Prerequisites
+
+- macOS (many scripts use AppleScript, `defaults`, `pbpaste`, `pmset`)
+- Bash (`#!/usr/bin/env bash`)
+- Optional Homebrew tools for specific scripts:
+  - `gdate` (GNU date)
+  - `rsync` (Homebrew path is used in one script)
+- Local configuration for Zettelkasten-based workflows:
+  - `~/.zettelkasten/config`
+
+## Scripts and Components
+
+### Documented components
+
+- [Add Reference to Daily Note](./add-reference-to-daily-note/)  
+  Adds or updates markdown references in an Obsidian daily note
+  (DEVONthink links, Dataview key support).
+- [Create Markdown Link](./create-markdown-link/README.md)  
+  Creates app-specific markdown links (DEVONthink/Finder/clipboard).
+- [Create Meeting Note](./create-meeting-note/README.md)  
+  Creates markdown meeting notes from calendar entries.
+- [DEVONthink CSS](./devonthink-css/README.md)  
+  CSS profile for DEVONthink markdown rendering.
+- [Sleep Wake to File](./sleep-wake-to-file/README.md)  
+  Exports sleep/wake events from `pmset` to daily log files.
+
+### Additional scripts (currently without dedicated README)
+
+- [export-embeddings/export-embeddings.sh](./export-embeddings/export-embeddings.sh)  
+  Rewrites local file links in exported markdown and copies attachments.
+- [get-name-of-frontmost-app/Get Name of Frontmost App.scpt](./get-name-of-frontmost-app/Get%20Name%20of%20Frontmost%20App.scpt)  
+  Returns the name of the frontmost macOS app.
+- [rsync-zettelkasten/rsync-zettelkasten.sh](./rsync-zettelkasten/rsync-zettelkasten.sh)  
+  Mirrors a Zettelkasten vault to backup destination via `rsync`.
+- [tag-file-with-frontmost-app/Tag File with Frontmost App.scpt](./tag-file-with-frontmost-app/Tag%20File%20with%20Frontmost%20App.scpt)  
+  Tags files based on the current frontmost app context.
+- [toggle-stage-manager/toggle-stage-manager.sh](./toggle-stage-manager/toggle-stage-manager.sh)  
+  Toggles Stage Manager on/off via macOS defaults.
+- [split-pages/toggle-stage-manager.sh](./split-pages/toggle-stage-manager.sh)  
+  Second toggle script with identical behavior (duplicate location).
+- [update-monthly-index-files/update-monthly-index-files.sh](./update-monthly-index-files/update-monthly-index-files.sh)  
+  Regenerates monthly index files from update markers.
+- [config/config.scpt](./config/config.scpt)  
+  Compiled AppleScript config/constants used by workflows.
+
+## Repository Notes
+
+- AppleScript files (`*.scpt`) are committed as compiled scripts.
+- Runtime logs are written by several scripts into local `logs/` folders.
+- `.log` files are ignored by git via `.gitignore`.
