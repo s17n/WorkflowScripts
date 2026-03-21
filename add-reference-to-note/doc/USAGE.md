@@ -2,7 +2,11 @@
 
 ## Zweck
 
-Der Workflow fuegt einen Link automatisch in die passende Obsidian-Notiz ein.
+Der Workflow hängt einen formatierten Referenzeintrag an eine passende Obsidian-Notiz an.
+Die Zielnotiz ist entweder:
+
+- eine Meeting-Notiz, deren Frontmatter-Zeitfenster zum übergebenen Zeitstempel passt
+- oder als Fallback die Daily Note `YYYY-MM-DD.md`
 
 ## Was passiert
 
@@ -20,7 +24,7 @@ Der Workflow erwartet:
 
 ## Ergebnis
 
-Es wird ein Eintrag wie dieser angehaengt:
+Es wird ein Eintrag wie dieser angehängt:
 
 ```md
 - Screenshot:: [Titel](https://beispiel.de)
@@ -42,7 +46,7 @@ python3 -m venv .venv
 ./.venv/bin/python -m pip install -r add-reference-to-note/requirements.txt
 ```
 
-Danach kann das Script ueber `./.venv/bin/python` gestartet werden.
+Danach kann das Script über `./.venv/bin/python` gestartet werden.
 
 ## Direkter Python-Aufruf
 

@@ -24,7 +24,7 @@ etc.).
 
 ### Documented components
 
-- [Add Reference to Note](./add-reference-to-note/doc/USAGE.md)  
+- [Add Reference to Note](./add-reference-to-note/README.md)  
   Adds formatted references to a matching meeting note or falls back to the
   daily note for the given timestamp.
 - [Create Markdown Link](./create-markdown-link/README.md)  

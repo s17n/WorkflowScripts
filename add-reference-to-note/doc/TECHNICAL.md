@@ -2,20 +2,20 @@
 
 ## Zweck
 
-Der Workflow haengt einen formatierten Referenzeintrag an eine passende Obsidian-Notiz an.
+Der Workflow hängt einen formatierten Referenzeintrag an eine passende Obsidian-Notiz an.
 Die Zielnotiz ist entweder:
 
-- eine Meeting-Notiz, deren Frontmatter-Zeitfenster zum uebergebenen Zeitstempel passt
+- eine Meeting-Notiz, deren Frontmatter-Zeitfenster zum übergebenen Zeitstempel passt
 - oder als Fallback die Daily Note `YYYY-MM-DD.md`
 
 ## Komponenten
 
 - `add-reference-to-note/Add Reference to Note.scpt`
-  Kompilierter AppleScript-Einstiegspunkt fuer Hazel / AppleScript-Laufzeit.
+  Kompilierter AppleScript-Einstiegspunkt für Hazel / AppleScript-Laufzeit.
 - `add-reference-to-note/add-reference-to-note.py`
-  Python-Logik fuer Zielnotiz-Aufloesung und Dateischreiben.
+  Python-Logik für Zielnotiz-Auflösung und Dateischreiben.
 - `add-reference-to-note/requirements.txt`
-  Python-Abhaengigkeit: `python-frontmatter`
+  Python-Abhängigkeit: `python-frontmatter`
 
 ## Datenfluss
 
@@ -33,8 +33,8 @@ Die Zielnotiz ist entweder:
    - `--daily-root`
    - `--timestamp`
    - `--entry`
-5. Python sucht zuerst eine passende Meeting-Notiz und faellt sonst auf die Daily Note zurueck.
-6. Wenn `--entry` gesetzt ist, wird der Eintrag mit Zeilenumbruch an die Zieldatei angehaengt.
+5. Python sucht zuerst eine passende Meeting-Notiz und fällt sonst auf die Daily Note zurück.
+6. Wenn `--entry` gesetzt ist, wird der Eintrag mit Zeilenumbruch an die Zieldatei angehängt.
 
 ## Python-Verhalten
 
@@ -43,12 +43,12 @@ Die Zielnotiz ist entweder:
   - `start`
   - `end`
 - Zeitvergleich erfolgt auf Minutenebene.
-- `--daily-only` ueberspringt die Meeting-Suche komplett und schreibt direkt in die Daily Note.
+- `--daily-only` überspringt die Meeting-Suche komplett und schreibt direkt in die Daily Note.
 - Ausgabe auf `stdout` ist immer der finale Zielpfad.
 
 ## Konfiguration
 
-Das AppleScript laedt `~/.workflowscripts/config.scpt` und verwendet daraus:
+Das AppleScript lädt `~/.workflowscripts/config.scpt` und verwendet daraus:
 
 - `pWorkflowScriptsBaseFolder`
 - `pZettelkastenDailyHome`
@@ -62,12 +62,12 @@ Logfile:
 
 - zentrale virtuelle Python-Umgebung auf Repo-Ebene unter:
   - `.venv/bin/python`
-- installierte Python-Abhaengigkeit:
+- installierte Python-Abhängigkeit:
   - `python-frontmatter`
 - Schreibrechte auf Daily- und Meeting-Notizen
 
 ## Wichtige Hinweise
 
 - Die produktive Laufzeitdatei ist `Add Reference to Note.scpt`.
-- `run` im AppleScript ist nur ein manueller Testpfad mit festem Testwert fuer `datetime`.
-- Im aktuellen Stand formatiert das AppleScript den kompletten Listeneintrag; Python schreibt den String unveraendert plus Newline.
+- `run` im AppleScript ist nur ein manueller Testpfad mit festem Testwert für `datetime`.
+- Im aktuellen Stand formatiert das AppleScript den kompletten Listeneintrag; Python schreibt den String unverändert plus Newline.
