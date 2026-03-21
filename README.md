@@ -23,9 +23,6 @@ them in recurring routines (Quick Actions, PopClip, LaunchBar, cron, etc.).
 
 ### Documented components
 
-- [Add Reference to Daily Note](./add-reference-to-daily-note/)  
-  Adds or updates markdown references in an Obsidian daily note
-  (DEVONthink links, Dataview key support).
 - [Create Markdown Link](./create-markdown-link/README.md)  
   Creates app-specific markdown links (DEVONthink/Finder/clipboard).
 - [Create Meeting Note](./create-meeting-note/README.md)  
