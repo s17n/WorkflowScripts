@@ -4,10 +4,11 @@ Collection of small macOS automation scripts for daily information workflows
 with Obsidian, DEVONthink, Finder, and Calendar.
 
 Compared to [MailScripts](https://github.com/s17n/MailScripts), this repository
-is broader and focused on information management workflows in general.
+has a broader scope and focuses on information management workflows.
 
-Each script is intentionally small and isolated. The value comes from combining
-them in recurring routines (Quick Actions, PopClip, LaunchBar, cron, etc.).
+Each script is intentionally small and isolated. The scripts are most useful
+when combined in recurring routines (Quick Actions, PopClip, LaunchBar, cron,
+etc.).
 
 ## Prerequisites
 
@@ -23,6 +24,9 @@ them in recurring routines (Quick Actions, PopClip, LaunchBar, cron, etc.).
 
 ### Documented components
 
+- [Add Reference to Note](./add-reference-to-note/doc/USAGE.md)  
+  Adds formatted references to a matching meeting note or falls back to the
+  daily note for the given timestamp.
 - [Create Markdown Link](./create-markdown-link/README.md)  
   Creates app-specific markdown links (DEVONthink/Finder/clipboard).
 - [Create Meeting Note](./create-meeting-note/README.md)  
@@ -45,11 +49,11 @@ them in recurring routines (Quick Actions, PopClip, LaunchBar, cron, etc.).
 - [toggle-stage-manager/toggle-stage-manager.sh](./toggle-stage-manager/toggle-stage-manager.sh)  
   Toggles Stage Manager on/off via macOS defaults.
 - [split-pages/toggle-stage-manager.sh](./split-pages/toggle-stage-manager.sh)  
-  Second toggle script with identical behavior (duplicate location).
+  Duplicate toggle script with identical behavior.
 - [update-monthly-index-files/update-monthly-index-files.sh](./update-monthly-index-files/update-monthly-index-files.sh)  
   Regenerates monthly index files from update markers.
 - [config/config.scpt](./config/config.scpt)  
-  Compiled AppleScript config/constants used by workflows.
+  Compiled AppleScript configuration constants used by the workflows.
 
 ## Repository Notes
 

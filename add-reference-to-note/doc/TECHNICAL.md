@@ -10,11 +10,11 @@ Die Zielnotiz ist entweder:
 
 ## Komponenten
 
-- `Add Reference to Note.scpt`
+- `add-reference-to-note/Add Reference to Note.scpt`
   Kompilierter AppleScript-Einstiegspunkt fuer Hazel / AppleScript-Laufzeit.
-- `add-reference-to-note.py`
+- `add-reference-to-note/add-reference-to-note.py`
   Python-Logik fuer Zielnotiz-Aufloesung und Dateischreiben.
-- `requirements.txt`
+- `add-reference-to-note/requirements.txt`
   Python-Abhaengigkeit: `python-frontmatter`
 
 ## Datenfluss

@@ -34,10 +34,9 @@ Mit Inline-Flag:
 
 ## Initiales Setup
 
-Vor der ersten Nutzung die virtuelle Python-Umgebung auf Repo-Ebene anlegen:
+Im Repo-Root vor der ersten Nutzung die virtuelle Python-Umgebung anlegen:
 
 ```sh
-cd /Users/steffen/Projects/WorkflowScripts
 python3 -m venv .venv
 ./.venv/bin/python -m pip install --upgrade pip
 ./.venv/bin/python -m pip install -r add-reference-to-note/requirements.txt
@@ -80,4 +79,4 @@ Direkt in die Daily Note schreiben:
 
 Zur Fehlersuche:
 
-- `/Users/steffen/Projects/WorkflowScripts/logs/execution.log`
+- `logs/execution.log`
