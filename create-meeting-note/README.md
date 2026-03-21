@@ -1,8 +1,8 @@
 # Create Meeting Note
 
-Ein Workflow zum Erstellen einer Markdown-Meeting-Notiz aus einem Exchange-Kalendereintrag.
+Ein Workflow zum Erstellen einer Markdown-Meeting-Notiz aus einem Kalendereintrag.
 
-Das Skript wird typischerweise mit einer Uhrzeit im Format `HH:MM` oder einem Datum mit Uhrzeit im Format `YYYY-MM-DD HH:MM` aufgerufen. Es sucht den passenden Kalendereintrag, erzeugt daraus eine Meeting-Notiz im Inbox-Ordner des Zettelkastens und legt Metadaten fuer die weitere Bearbeitung und spaetere Auswertung ab.
+Das Skript wird typischerweise fuer ein Datum im Format `YYYY-MM-DD` aufgerufen. Es listet die Termine dieses Tages auf, laesst einen Termin auswaehlen, erzeugt daraus eine Meeting-Notiz im Inbox-Ordner des Zettelkastens und legt Metadaten fuer die weitere Bearbeitung und spaetere Auswertung ab.
 
 Die produktive Laufzeitdatei ist `Create Meeting Note from Calendar Entry.scpt`.
 

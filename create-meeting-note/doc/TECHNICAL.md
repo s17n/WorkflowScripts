@@ -27,15 +27,13 @@ Die Notiz enthaelt:
 ## Datenfluss
 
 1. Das Skript laedt Konfiguration aus `~/.workflowscripts/config.scpt`.
-2. `run` startet einen Dialog mit Datum/Uhrzeit und den Buttons `List Meetings`, `Cancel` und `Create`.
+2. `run` startet einen Dialog mit Datum und den Buttons `List Meetings` und `Cancel`.
 3. `List Meetings` ruft `fetchEventsByDay(...)` auf, zeigt eine Auswahlliste und erzeugt ueber `createNoteFromEvent(...)` eine Notiz fuer den gewaehlten Termin.
-4. `Create` soll ueber `createNoteFromDateTime(...)` direkt den zum Zeitpunkt passenden Termin aufloesen.
-5. `fetchEventsByDay(...)` liest ueber `CalendarLib EC` Termine fuer den Tagesbereich `00:00` bis `23:59`.
-6. `resolveCalendars(...)` sammelt bevorzugt Exchange-, iCloud- und lokale Kalender und durchsucht diese gemeinsam.
-7. `getEventByTime(...)` waehlt den Termin, dessen Startzeit `<=` Zielzeit und dessen Endzeit `>` Zielzeit ist.
-8. `createNoteFromEvent(...)` sammelt Event-Info und Attendees, erzeugt den Dateinamen `YYYYMMDD-HHMM.md`, schreibt den Markdown-Inhalt und setzt die Zwischenablage.
-9. Optional entfernt `removeCallInBlock(...)` einen Block aus der geschriebenen Datei per `grep`, `awk` und `sed`.
-10. Wenn Start- oder Endmarker fuer den Call-In-Block fehlen, wird der Entfernungsschritt geloggt und uebersprungen.
+4. `fetchEventsByDay(...)` liest ueber `CalendarLib EC` Termine fuer den Tagesbereich `00:00` bis `23:59`.
+5. `resolveCalendars(...)` sammelt bevorzugt Exchange-, iCloud- und lokale Kalender und durchsucht diese gemeinsam.
+6. `createNoteFromEvent(...)` sammelt Event-Info und Attendees, erzeugt den Dateinamen `YYYYMMDD-HHMM.md`, schreibt den Markdown-Inhalt und setzt die Zwischenablage.
+7. Optional entfernt `removeCallInBlock(...)` einen Block aus der geschriebenen Datei per `grep`, `awk` und `sed`.
+8. Wenn Start- oder Endmarker fuer den Call-In-Block fehlen, wird der Entfernungsschritt geloggt und uebersprungen.
 
 ## Sequenzdiagramm
 
@@ -103,7 +101,6 @@ Logfile:
 
 - Die produktive Laufzeitdatei ist ausschliesslich `Create Meeting Note from Calendar Entry.scpt`.
 - Es liegt keine menschenlesbare `*.applescript`-Quelldatei im Modul vor.
-- `createNoteFromDateTime(...)` ruft aktuell `createMeetingNoteFromEvent(...)` auf; dieser Handler existiert nicht. Der `Create`-Pfad ist damit kaputt.
 - Das Modul hat im aktuellen Stand keinen Hazel-Einstiegspunkt.
 - `pOverwriteExistingNote` ist im Skript hart auf `true` gesetzt und ignoriert damit den Konfigurationswert.
 - Der Kalenderzugriff durchsucht bevorzugt Exchange-, iCloud- und lokale Kalender gemeinsam und faellt sonst auf alle verfuegbaren Kalender zurueck.

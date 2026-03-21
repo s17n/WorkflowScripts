@@ -22,7 +22,7 @@ on run {}
 	my writeLog("run: Started")
 
 	set theDateTime to do shell script "/opt/homebrew/bin/gdate \"+%Y-%m-%d\""
-	set theResult to display dialog "Datum & Uhrzeit (Beginn des Meetings) zu der eine Meeting Note erstellt werden soll (Format: YYYY-mm-dd hh:mm):" buttons {"List Meetings", "Cancel", "Create"} default answer theDateTime default button 1
+	set theResult to display dialog "Datum zu dem die Meetings aufgelistet werden sollen (Format: YYYY-mm-dd):" buttons {"List Meetings", "Cancel"} default answer theDateTime default button 1
 
 	set theDateTime to text returned of theResult
 	if button returned of theResult is "List Meetings" then
@@ -40,39 +40,10 @@ on run {}
 			set theFilenameOfMeetingNote to my createNoteFromEvent(theEvent)
 			my setClipboard(theEvent)
 		end if
-
-	else if button returned of theResult is "Create" then
-		my createNoteFromDateTime(theDateTime)
-
 	end if
 
 	my writeLog("run: Finished")
 end run
-
-
--- Ermittelt für die angegebene Zeit den passenden Kalendereintrag und erstellt mit den Daten
--- des Kalendereintrags eine Meeting Note im Inbox Folder des Zettelkastens.
--- Wird nur eine Uhrzeit übergeben, dann wird als Datum das aktuelle Systemdatum verwendet.
--- Der Aufruf erfolgt überlicherweise aus der Daily Note heraus mittels PopClip.
--- Parameter:
---   timeParam - im Format "HH:MM" oder "YYYY-mm-dd HH:MM"
-on createNoteFromDateTime(theDateTime)
-	my writeLog("createNoteFromDateTime: Started - theDateTime: " & theDateTime)
-
-	if not length of theDateTime is 16 then
-		set theDay to do shell script "/opt/homebrew/bin/gdate \"+%Y-%m-%d\""
-		set theDateTime to theDay & " " & theDateTime
-	end if
-	set theDay to text items 1 thru 10 of theDateTime
-
-	set allEventsOfDayResult to my fetchEventsByDay(theDay)
-	set theEvents to item 1 of allEventsOfDayResult
-	set theEvent to my getEventByTime(theEvents, theDateTime)
-	if theEvent is not missing value then
-		set theFilenameOfMeetingNote to my createMeetingNoteFromEvent(theEvent)
-	end if
-	my writeLog("createNoteFromDateTime: Finished")
-end createNoteFromDateTime
 
 on getEventByListEntry(theEvents, theSelectedEvent)
 	my writeLog("getEventByListEntry: Started")

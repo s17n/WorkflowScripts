@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Der Workflow erstellt aus einem Exchange-Kalendereintrag eine Meeting-Notiz im Markdown-Format.
+Der Workflow erstellt aus einem Kalendereintrag eine Meeting-Notiz im Markdown-Format.
 
 Die Notiz wird im Inbox-Ordner des Zettelkastens angelegt und enthaelt:
 
@@ -15,8 +15,7 @@ Die Notiz wird im Inbox-Ordner des Zettelkastens angelegt und enthaelt:
 
 ## Was passiert
 
-- Das Skript ermittelt fuer eine uebergebene Uhrzeit den passenden Termin des Tages.
-- Alternativ kann ein komplettes Datum mit Uhrzeit uebergeben werden.
+- Das Skript listet fuer ein uebergebenes Datum die Termine des Tages auf.
 - Aus dem Termin wird ein Dateiname im Format `YYYYMMDD-HHMM.md` gebildet.
 - Die Notiz wird im konfigurierten Inbox-Ordner erstellt.
 - Ein Wiki-Link zur erzeugten Notiz wird in die Zwischenablage gelegt.
@@ -28,17 +27,13 @@ Der uebliche Aufruf erfolgt aus der Daily Note heraus, zum Beispiel ueber PopCli
 Im manuellen Start zeigt das Skript einen Dialog mit diesen Aktionen:
 
 - `List Meetings`: listet die Termine eines Tages zur Auswahl auf, inklusive Kalendername
-- `Create`: versucht direkt fuer den eingegebenen Zeitpunkt eine Notiz zu erzeugen
 - `Cancel`: bricht ab
 
 ## Eingaben
 
 Unterstuetzt werden:
 
-- `HH:MM`
-- `YYYY-MM-DD HH:MM`
-
-Bei reiner Uhrzeit wird automatisch das aktuelle Datum verwendet.
+- `YYYY-MM-DD`
 
 ## Ergebnis
 
@@ -73,7 +68,6 @@ Die aufrufende Anwendung, typischerweise Script Editor oder PopClip, braucht Kal
 
 ## Bekannte Einschraenkungen
 
-- Der Dialogpfad `Create` ist im aktuellen Stand defekt und erzeugt keine Notiz.
 - Wenn eine Notiz bereits existiert, wird sie im aktuellen Stand ueberschrieben.
 - Das Modul hat im aktuellen Stand keinen Hazel-Einstiegspunkt mehr.
 - Wenn beim Entfernen des Call-In-Blocks Start- oder Endmarker fehlen, wird der Schritt uebersprungen und die Notiz unveraendert belassen.
