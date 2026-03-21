@@ -18,17 +18,6 @@ property pCallInBlockEndIdentifier : pCallInBlockEndIdentifier of configFile
 property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/logs/execution.log"
 property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
 
-on hazelProcessFile(theFile, inputAttributes)
-	my writeLog("hazelProcessFile: " & POSIX file theFile)
-	set filename to null
-	if (theFile as string) contains "Microsoft-Teams" then
-		my writeLog("hazelProcessFile: Microsoft-Teams file detected - process Calendar events")
-		set todayFragment to do shell script "/opt/homebrew/bin/gdate \"+%y-%m-%d %H:%M\""
-		set filename to my fetchEventAndCreateNote(todayFragment)
-	end if
-	return {hazelOutputAttributes:{filename}}
-end hazelProcessFile
-
 on run {}
 	my writeLog("run: Started")
 
@@ -40,6 +29,11 @@ on run {}
 		set allEventsOfDayResult to my fetchEventsByDay(theDateTime)
 		set theEvents to item 1 of allEventsOfDayResult
 		set theListOfEvents to item 2 of allEventsOfDayResult
+		if (count of theListOfEvents) is 0 then
+			my writeLog("run: No meetings found for day: " & theDateTime)
+			display dialog "Keine Meetings fuer " & theDateTime & " gefunden." buttons {"OK"} default button 1
+			return
+		end if
 		set theSelectedEvent to choose from list theListOfEvents
 		if theSelectedEvent is not false then
 			set theEvent to my getEventByListEntry(theEvents, theSelectedEvent)
@@ -74,7 +68,7 @@ on createNoteFromDateTime(theDateTime)
 	set allEventsOfDayResult to my fetchEventsByDay(theDay)
 	set theEvents to item 1 of allEventsOfDayResult
 	set theEvent to my getEventByTime(theEvents, theDateTime)
-	if theEvent is not null then
+	if theEvent is not missing value then
 		set theFilenameOfMeetingNote to my createMeetingNoteFromEvent(theEvent)
 	end if
 	my writeLog("createNoteFromDateTime: Finished")
@@ -83,7 +77,7 @@ end createNoteFromDateTime
 on getEventByListEntry(theEvents, theSelectedEvent)
 	my writeLog("getEventByListEntry: Started")
 
-	set theEvent to null
+	set theEvent to missing value
 	repeat with anEvent in theEvents
 		set eventEntryString to my eventEntry(anEvent)
 		if (eventEntryString as string) is equal to (theSelectedEvent as string) then
@@ -99,7 +93,7 @@ on getEventByTime(theEvents, theDateTime)
 	my writeLog("getEventByTime: Started")
 
 	set theDateTimeInISO to my convertDateStringToISO8601Date(theDateTime)
-	set theEvent to null
+	set theEvent to missing value
 
 	repeat with anEvent in theEvents
 		set anEventInfo to event info for event anEvent
@@ -121,8 +115,9 @@ on fetchEventsByDay(theDay)
 	set fetchStartDate to my convertDateStringToISO8601Date((theDay as text) & " 00:00")
 	set fetchEndDate to my convertDateStringToISO8601Date((theDay as text) & " 23:59")
 	set theStore to fetch store
-	set theCal to fetch calendar "Calendar" cal type cal exchange event store theStore -- change to suit
-	set theEvents to fetch events starting date fetchStartDate ending date fetchEndDate searching cals {theCal} event store theStore
+	set theCalendars to my resolveCalendars(theStore)
+	my writeLog("fetchEventsByDay: Searching calendars: " & (count of theCalendars))
+	set theEvents to fetch events starting date fetchStartDate ending date fetchEndDate searching cals theCalendars event store theStore
 
 	set theEventsList to {}
 	if length of theEvents > 0 then
@@ -135,11 +130,44 @@ on fetchEventsByDay(theDay)
 	return {theEvents, theEventsList}
 end fetchEventsByDay
 
+on resolveCalendars(theStore)
+	my writeLog("resolveCalendars: Started")
+
+	set theCalendars to {}
+	try
+		set theCalendars to fetch calendars {} cal type list {cal exchange, cal cloud, cal local} event store theStore
+		if (count of theCalendars) > 0 then
+			my writeLog("resolveCalendars: Using Exchange/iCloud/local calendars")
+			return theCalendars
+		end if
+	on error errStr number errorNumber
+		my writeLog("resolveCalendars: Preferred calendar lookup failed: " & errorNumber & " - " & errStr)
+	end try
+
+	try
+		set theCalendars to fetch calendars {} event store theStore
+		if (count of theCalendars) > 0 then
+			my writeLog("resolveCalendars: Using all available calendars as fallback")
+			return theCalendars
+		end if
+	on error errStr number errorNumber
+		my writeLog("resolveCalendars: Generic calendar fallback failed: " & errorNumber & " - " & errStr)
+	end try
+
+	error "Kein verwendbarer Kalender gefunden."
+end resolveCalendars
+
 on eventEntry(theEvent)
 	my writeLog("eventEntry: Started")
 
 	set theEventInfo to event info for event theEvent
 	set theEventSummary to (event_summary of theEventInfo as string)
+	set theCalendarName to ""
+	try
+		set theCalendarName to (calendar_name of theEventInfo as string)
+	on error
+		set theCalendarName to ""
+	end try
 	set startDate to event_start_date of theEventInfo
 	set endDate to event_end_date of theEventInfo
 
@@ -147,7 +175,10 @@ on eventEntry(theEvent)
 	set endDateAsString to my formatASDate(event_end_date of theEventInfo, "%H:%M")
 
 	my writeLog("eventEntry: Finished")
-	return (startDateAsString as string) & " - " & (endDateAsString) & ": " & theEventSummary
+	if theCalendarName is "" then
+		return (startDateAsString as string) & " - " & (endDateAsString) & ": " & theEventSummary
+	end if
+	return (startDateAsString as string) & " - " & (endDateAsString) & ": " & theEventSummary & " [" & theCalendarName & "]"
 end eventEntry
 
 on setClipboard(theEvent)
@@ -166,7 +197,7 @@ on createNoteFromEvent(theEvent)
 	my writeLog("createNoteFromEvent: Started")
 
 	set theEventInfo to event info for event theEvent
-	set theEventAttendees to null
+	set theEventAttendees to missing value
 	try
 		set theEventAttendees to event attendees for event theEvent
 	on error errStr number errorNumber
@@ -201,8 +232,23 @@ on removeCallInBlock(theFile)
 	-- grep -n "Microsoft Teams Need help?" 20250530-1100.md | awk  -F':' ' { print $1 }'
 	set startLineNumber to do shell script "grep -n \"" & (pCallInBlockStartIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
 	set endLineNumber to do shell script "grep -n \"" & (pCallInBlockEndIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
+	if startLineNumber is "" then
+		my writeLog("removeCallInBlock: Start marker not found - skip note: " & theFile)
+		return
+	end if
+	if endLineNumber is "" then
+		my writeLog("removeCallInBlock: End marker not found - skip note: " & theFile)
+		return
+	end if
 	set startLineNumber to startLineNumber - 1
 	set endLineNumber to endLineNumber + 1
+	if startLineNumber < 1 then
+		set startLineNumber to 1
+	end if
+	if endLineNumber < startLineNumber then
+		my writeLog("removeCallInBlock: Invalid line range - skip note: " & theFile)
+		return
+	end if
 	set sedParameter to startLineNumber & "," & endLineNumber & "d"
 	-- sed -i -e '36,51d' 20250530-1100.md
 	my writeLog("removeCallInBlock: Remove lines: " & startLineNumber & " - " & endLineNumber & " from note: " & theFile)
@@ -215,7 +261,7 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	my writeLog("createContentForMeetingNote: Started")
 	set theChair to "n/a"
 	set {content, theTeilnehmer, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther} to {"", "(nicht ermittelbar)", 0, 0, 0, 0, 0}
-	if theEventAttendees is not null then
+	if theEventAttendees is not missing value then
 		set theResult to my createAttendeesList(theEventAttendees)
 		set theTeilnehmer to content of theResult
 		set numberAccepted to number_accepted of theResult
@@ -247,7 +293,7 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	set fm to fm & "---" & linefeed
 
 	set theTasks to "- [ ] Notes erstellen bis: 🗓️" & theDay & linefeed
-	if theChair is not null and theChair contains pLastname then
+	if theChair is not missing value and theChair contains pLastname then
 		set theTasks to theTasks & "- [ ] Protokoll verteilen bis: 🗓️" & theDay
 	end if
 	set content to fm
