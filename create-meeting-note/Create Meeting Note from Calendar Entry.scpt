@@ -9,7 +9,7 @@ property pScriptName : "Create Meeting Note from Calendar Entry.scpt"
 property configFile : load script (POSIX path of (path to home folder) & ".workflowscripts/config.scpt")
 property pInboxFolder : pZettelkastenInboxFolder of configFile
 property pWorkflowScriptsBaseFolder : pWorkflowScriptsBaseFolder of configFile
-property pMeetingNoteHeading : pMeetingNoteHeading of configFile
+property pMeetingNoteTemplateFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/templates/meeting-note.md"
 property pLastname : pLastname of configFile
 property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
 property pRemoveCallInBlock : pRemoveCallInBlock of configFile
@@ -188,7 +188,7 @@ on createNoteFromEvent(theEvent)
 	else
 		my writeLog("createNoteFromEvent: Create Meeting Note: " & theFQFN)
 		set content to my createContentForMeetingNote(theEventInfo, theEventAttendees)
-		do shell script "echo " & quoted form of content & " > \"" & theFQFN & "\""
+		my writeTextFile(theFQFN, content)
 		if pRemoveCallInBlock then
 			my removeCallInBlock(theFQFN)
 		end if
@@ -231,10 +231,12 @@ end removeCallInBlock
 on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	my writeLog("createContentForMeetingNote: Started")
 	set theChair to "n/a"
-	set {content, theTeilnehmer, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther} to {"", "(nicht ermittelbar)", 0, 0, 0, 0, 0}
+	set {content, chairEntry, requiredEntries, optionalEntries, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther} to {"", "(nicht ermittelbar)", "	- (keine)", "	- (keine)", 0, 0, 0, 0, 0}
 	if theEventAttendees is not missing value then
 		set theResult to my createAttendeesList(theEventAttendees)
-		set theTeilnehmer to content of theResult
+		set chairEntry to chair of theResult
+		set requiredEntries to required_entries of theResult
+		set optionalEntries to optional_entries of theResult
 		set numberAccepted to number_accepted of theResult
 		set numberDeclined to number_declined of theResult
 		set numberTentative to number_tentative of theResult
@@ -251,38 +253,84 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	set theDay to my formatASDate(event_start_date of theEventInfo, "%Y-%m-%d")
 	set theStart to my formatASDate(event_start_date of theEventInfo, "%H:%M")
 	set theEnd to my formatASDate(event_end_date of theEventInfo, "%H:%M")
-	set fm to "---" & linefeed
-	set fm to fm & "meeting:" & linefeed
-	set fm to fm & "  day: " & theDay & linefeed
-	set fm to fm & "  start: " & theStart & linefeed
-	set fm to fm & "  end: " & theEnd & linefeed
-	set fm to fm & "  attendees_total: " & numberTotal & linefeed
-	set fm to fm & "  attendees_accepted: " & numberAccepted & linefeed
-	set fm to fm & "  attendees_declined: " & numberDeclined & linefeed
-	set fm to fm & "  attendees_tentative: " & numberTentative & linefeed
-	set fm to fm & "  attendees_other: " & numberOther & linefeed
-	set fm to fm & "---" & linefeed
 
 	set theTasks to "- [ ] Notes erstellen bis: 🗓️" & theDay & linefeed
 	if theChair is not missing value and theChair contains pLastname then
 		set theTasks to theTasks & "- [ ] Protokoll verteilen bis: 🗓️" & theDay
 	end if
-	set content to fm
-	set content to content & pMeetingNoteHeading & linefeed ¬
-		& "# Todos" & linefeed & linefeed ¬
-		& theTasks & linefeed ¬
-		& "# Termin" & linefeed & linefeed ¬
-		& "- Summary: " & theSummary & linefeed ¬
-		& "- Date: " & theTime & linefeed ¬
-		& theTeilnehmer & linefeed ¬
-		& "**fett:** anwesend" & linefeed ¬
-		& "### Description " & linefeed & linefeed & (event_description of theEventInfo as string) & linefeed ¬
-		& "# Mitschrift " & linefeed & linefeed & linefeed ¬
-		& "# Referenzen " & linefeed
+	set theDescription to ""
+	try
+		set theDescription to (event_description of theEventInfo as string)
+	end try
+	set content to my renderMeetingNoteTemplate(theDay, theStart, theEnd, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther, theTasks, theSummary, theTime, chairEntry, requiredEntries, optionalEntries, theDescription)
 	my writeLog(content)
 	my writeLog("createContentForMeetingNote: Finished")
 	return content
 end createContentForMeetingNote
+
+on renderMeetingNoteTemplate(theDay, theStart, theEnd, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther, theTasks, theSummary, theTime, chairEntry, requiredEntries, optionalEntries, theDescription)
+	my writeLog("renderMeetingNoteTemplate: Started")
+
+	set content to my loadMeetingNoteTemplate()
+	set content to my replacePlaceholder(content, "meeting_day", theDay)
+	set content to my replacePlaceholder(content, "meeting_start", theStart)
+	set content to my replacePlaceholder(content, "meeting_end", theEnd)
+	set content to my replacePlaceholder(content, "attendees_total", numberTotal)
+	set content to my replacePlaceholder(content, "attendees_accepted", numberAccepted)
+	set content to my replacePlaceholder(content, "attendees_declined", numberDeclined)
+	set content to my replacePlaceholder(content, "attendees_tentative", numberTentative)
+	set content to my replacePlaceholder(content, "attendees_other", numberOther)
+	set content to my replacePlaceholder(content, "tasks", theTasks)
+	set content to my replacePlaceholder(content, "summary", theSummary)
+	set content to my replacePlaceholder(content, "time", theTime)
+	set content to my replacePlaceholder(content, "chair", chairEntry)
+	set content to my replacePlaceholder(content, "required_attendees", requiredEntries)
+	set content to my replacePlaceholder(content, "optional_attendees", optionalEntries)
+	set content to my replacePlaceholder(content, "description", theDescription)
+
+	my writeLog("renderMeetingNoteTemplate: Finished")
+	return content
+end renderMeetingNoteTemplate
+
+on loadMeetingNoteTemplate()
+	my writeLog("loadMeetingNoteTemplate: Started")
+
+	if not my FileExists(pMeetingNoteTemplateFile) then
+		error "Template file not found: " & pMeetingNoteTemplateFile
+	end if
+
+	set templateContent to do shell script "cat " & quoted form of pMeetingNoteTemplateFile
+	my writeLog("loadMeetingNoteTemplate: Finished")
+	return templateContent
+end loadMeetingNoteTemplate
+
+on writeTextFile(theFile, theContent)
+	my writeLog("writeTextFile: Started - " & theFile)
+
+	set NSString to current application's NSString's stringWithString:(theContent as string)
+	set normalizedString to (NSString's stringByReplacingOccurrencesOfString:(return) withString:(linefeed))
+	set {didWrite, writeError} to normalizedString's writeToFile:theFile atomically:true encoding:(current application's NSUTF8StringEncoding) |error|:(reference)
+	if not (didWrite as boolean) then
+		error (writeError's localizedDescription() as text)
+	end if
+
+	my writeLog("writeTextFile: Finished")
+end writeTextFile
+
+on replacePlaceholder(theContent, placeholderName, placeholderValue)
+	set oldTIDs to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to "{{" & placeholderName & "}}"
+	set contentItems to text items of theContent
+	if placeholderValue is missing value then
+		set replacementValue to ""
+	else
+		set replacementValue to placeholderValue as string
+	end if
+	set AppleScript's text item delimiters to replacementValue
+	set newContent to contentItems as text
+	set AppleScript's text item delimiters to oldTIDs
+	return newContent
+end replacePlaceholder
 
 on getChair(theAttendees)
 	my writeLog("getChair: Started")
@@ -302,24 +350,23 @@ on createAttendeesList(theAttendees)
 	my writeLog("createAttendeesList: Started")
 	log (theAttendees)
 
-	set theContent to ""
-
-	set number_total to 0
 	set number_accepted to 0
 	set number_declined to 0
 	set number_tentative to 0
 	set number_other to 0 -- umfasst to attendee_status: in process, unknown
+	set chair to "(nicht ermittelbar)"
+	set required_entries to "	- (keine)"
+	set optional_entries to "	- (keine)"
 	if length of theAttendees > 0 then
 		my writeLog("createAttendeesList: Attendees found: " & length of theAttendees)
 
-		set theChairName to "(nicht ermittelbar)"
 		set required to {}
 		set optional to {}
 
 		repeat with attendee in theAttendees
 			set theRole to attendee_role of attendee
 			if theRole is "chair" or theRole is "unknown" then
-				set theChairName to attendee_name of attendee
+				set chair to attendee_name of attendee
 			else if theRole is "required" then
 				set end of required to attendee
 			else
@@ -327,27 +374,23 @@ on createAttendeesList(theAttendees)
 			end if
 		end repeat
 
-		set theChairString to "- Chair: " & theChairName & linefeed
-		set theContent to theContent & theChairString
-
 		set theSublistResult to my createAttendeesSection("- Required: ", required)
 		set number_accepted to number_accepted + (number_accepted of theSublistResult)
 		set number_declined to number_declined + (number_declined of theSublistResult)
 		set number_tentative to number_tentative + (number_tentative of theSublistResult)
 		set number_other to number_other + (number_other of theSublistResult)
-		set theContent to theContent & content of theSublistResult
+		set required_entries to entries of theSublistResult
 
 		set theSublistResult to my createAttendeesSection("- Optional: ", optional)
 		set number_accepted to number_accepted + (number_accepted of theSublistResult)
 		set number_declined to number_declined + (number_declined of theSublistResult)
 		set number_tentative to number_tentative + (number_tentative of theSublistResult)
 		set number_other to number_other + (number_other of theSublistResult)
-		set theContent to theContent & content of theSublistResult
+		set optional_entries to entries of theSublistResult
 	else
-		set theContent to "(keine)"
 		my writeLog("createAttendeesList: No attendees found. ")
 	end if
-	return {content:theContent, number_accepted:number_accepted, number_declined:number_declined, number_tentative:number_tentative, number_other:number_other}
+	return {chair:chair, required_entries:required_entries, optional_entries:optional_entries, number_accepted:number_accepted, number_declined:number_declined, number_tentative:number_tentative, number_other:number_other}
 	my writeLog("createAttendeesList: Finished")
 end createAttendeesList
 
@@ -370,22 +413,27 @@ on createAttendeesSection(theSectionHeader, theAttendeeList)
 			set end of other to attendee
 		end if
 	end repeat
-	set theContent to theSectionHeader & linefeed
+	set theEntries to ""
 	repeat with attendee in accepted
-		set theContent to theContent & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
+		set theEntries to theEntries & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
 	end repeat
 	repeat with attendee in declined
-		set theContent to theContent & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
+		set theEntries to theEntries & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
 	end repeat
 	repeat with attendee in tentative
-		set theContent to theContent & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
+		set theEntries to theEntries & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
 	end repeat
 	repeat with attendee in other
-		set theContent to theContent & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
+		set theEntries to theEntries & "	- " & attendee_name of attendee & ", " & attendee_status of attendee & linefeed
 	end repeat
+	if theEntries is "" then
+		set theEntries to "	- (keine)"
+	else if theEntries ends with linefeed then
+		set theEntries to text 1 thru -2 of theEntries
+	end if
 
 	my writeLog("createAttendeesSection: Finished")
-	return {content:theContent, number_accepted:length of accepted, number_declined:length of declined, number_tentative:length of tentative, number_other:length of other}
+	return {entries:theEntries, number_accepted:length of accepted, number_declined:length of declined, number_tentative:length of tentative, number_other:length of other}
 end createAttendeesSection
 
 on eventInfoSummary(theEventInfo)
@@ -444,4 +492,3 @@ on writeLog(theMessage)
 	set msg to timestamp & ": " & pScriptName & ": " & theMessage
 	do shell script "echo " & quoted form of msg & " >> " & pLogFile
 end writeLog
-

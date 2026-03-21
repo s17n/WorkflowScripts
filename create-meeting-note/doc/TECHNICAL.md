@@ -23,6 +23,8 @@ Die Notiz enthaelt:
   Technische Dokumentation.
 - `create-meeting-note/doc/CALL-CHAIN.md`
   Sequenzdiagramm der Standard-Call-Chain.
+- `create-meeting-note/templates/meeting-note.md`
+  Default-Template fuer den Inhalt der Meeting-Notiz.
 
 ## Datenfluss
 
@@ -32,8 +34,10 @@ Die Notiz enthaelt:
 4. `fetchEventsByDay(...)` liest ueber `CalendarLib EC` Termine fuer den Tagesbereich `00:00` bis `23:59`.
 5. `resolveCalendars(...)` sammelt bevorzugt Exchange-, iCloud- und lokale Kalender und durchsucht diese gemeinsam.
 6. `createNoteFromEvent(...)` sammelt Event-Info und Attendees, erzeugt den Dateinamen `YYYYMMDD-HHMM.md`, schreibt den Markdown-Inhalt und setzt die Zwischenablage.
-7. Optional entfernt `removeCallInBlock(...)` einen Block aus der geschriebenen Datei per `grep`, `awk` und `sed`.
-8. Wenn Start- oder Endmarker fuer den Call-In-Block fehlen, wird der Entfernungsschritt geloggt und uebersprungen.
+7. `createContentForMeetingNote(...)` berechnet Frontmatter, Aufgaben, Teilnehmertext und Description.
+8. `renderMeetingNoteTemplate(...)` laedt `templates/meeting-note.md` und ersetzt die Platzhalter.
+9. Optional entfernt `removeCallInBlock(...)` einen Block aus der geschriebenen Datei per `grep`, `awk` und `sed`.
+10. Wenn Start- oder Endmarker fuer den Call-In-Block fehlen, wird der Entfernungsschritt geloggt und uebersprungen.
 
 ## Sequenzdiagramm
 
@@ -46,20 +50,38 @@ Die Standard-Call-Chain ist separat dokumentiert:
 Die Notiz wird von `createContentForMeetingNote(...)` aufgebaut und besteht aus:
 
 - YAML-Frontmatter mit:
-  - `meeting.day`
-  - `meeting.start`
-  - `meeting.end`
-  - `meeting.attendees_total`
+- `meeting.day`
+- `meeting.start`
+- `meeting.end`
+- `meeting.attendees_total`
   - `meeting.attendees_accepted`
   - `meeting.attendees_declined`
-  - `meeting.attendees_tentative`
-  - `meeting.attendees_other`
-- Ueberschrift aus `pMeetingNoteHeading`
+- `meeting.attendees_tentative`
+- `meeting.attendees_other`
 - Abschnitt `# Todos`
 - Abschnitt `# Termin`
 - Abschnitt `### Description`
 - Abschnitt `# Mitschrift`
 - Abschnitt `# Referenzen`
+
+Das konkrete Layout stammt aus dem Template `templates/meeting-note.md`.
+Aktuell unterstuetzte Platzhalter:
+
+- `{{meeting_day}}`
+- `{{meeting_start}}`
+- `{{meeting_end}}`
+- `{{attendees_total}}`
+- `{{attendees_accepted}}`
+- `{{attendees_declined}}`
+- `{{attendees_tentative}}`
+- `{{attendees_other}}`
+- `{{chair}}`
+- `{{required_attendees}}`
+- `{{optional_attendees}}`
+- `{{tasks}}`
+- `{{summary}}`
+- `{{time}}`
+- `{{description}}`
 
 ## Teilnehmerlogik
 
@@ -78,7 +100,6 @@ Das Skript erwartet diese Properties in `~/.workflowscripts/config.scpt`:
 
 - `pZettelkastenInboxFolder`
 - `pWorkflowScriptsBaseFolder`
-- `pMeetingNoteHeading`
 - `pLastname`
 - `pOverwriteExistingNote`
 - `pRemoveCallInBlock`
@@ -88,6 +109,10 @@ Das Skript erwartet diese Properties in `~/.workflowscripts/config.scpt`:
 Logfile:
 
 - `<pWorkflowScriptsBaseFolder>/create-meeting-note/logs/execution.log`
+
+Template-Datei:
+
+- `<pWorkflowScriptsBaseFolder>/create-meeting-note/templates/meeting-note.md`
 
 ## Voraussetzungen
 
@@ -104,5 +129,6 @@ Logfile:
 - Das Modul hat im aktuellen Stand keinen Hazel-Einstiegspunkt.
 - `pOverwriteExistingNote` ist im Skript hart auf `true` gesetzt und ignoriert damit den Konfigurationswert.
 - Der Kalenderzugriff durchsucht bevorzugt Exchange-, iCloud- und lokale Kalender gemeinsam und faellt sonst auf alle verfuegbaren Kalender zurueck.
+- Wenn die Template-Datei fehlt, bricht das Skript mit einem klaren Fehler auf `loadMeetingNoteTemplate(...)` ab.
 - `removeCallInBlock(...)` prueft jetzt auf fehlende Start- und Endmarker und bricht in diesem Fall kontrolliert ohne Dateiaenderung ab.
 - `createContentForMeetingNote(...)` schreibt den kompletten generierten Note-Inhalt ins Logfile. Das ist fuer Debugging nuetzlich, aber inhaltlich sehr ausfuehrlich.

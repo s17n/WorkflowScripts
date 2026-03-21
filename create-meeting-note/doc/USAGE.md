@@ -55,6 +55,32 @@ meeting:
 
 Danach folgen Bereiche fuer Todos, Termin, Description, Mitschrift und Referenzen.
 
+## Template anpassen
+
+Das Layout der Meeting-Notiz kommt aus:
+
+- `templates/meeting-note.md`
+
+Dieses Template kann direkt angepasst werden. Das Skript ersetzt dabei einfache Platzhalter im Format `{{name}}`.
+
+Verfuegbare Platzhalter im Standard-Template:
+
+- `{{meeting_day}}`
+- `{{meeting_start}}`
+- `{{meeting_end}}`
+- `{{attendees_total}}`
+- `{{attendees_accepted}}`
+- `{{attendees_declined}}`
+- `{{attendees_tentative}}`
+- `{{attendees_other}}`
+- `{{chair}}`
+- `{{required_attendees}}`
+- `{{optional_attendees}}`
+- `{{tasks}}`
+- `{{summary}}`
+- `{{time}}`
+- `{{description}}`
+
 ## Voraussetzungen
 
 - macOS mit Zugriff auf den Kalender
