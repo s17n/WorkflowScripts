@@ -12,9 +12,6 @@ property pWorkflowScriptsBaseFolder : pWorkflowScriptsBaseFolder of configFile
 property pMeetingNoteTemplateFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/templates/meeting-note.md"
 property pLastname : pLastname of configFile
 property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
-property pRemoveCallInBlock : pRemoveCallInBlock of configFile
-property pCallInBlockStartIdentifier : pCallInBlockStartIdentifier of configFile
-property pCallInBlockEndIdentifier : pCallInBlockEndIdentifier of configFile
 property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/logs/execution.log"
 property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
 
@@ -189,44 +186,10 @@ on createNoteFromEvent(theEvent)
 		my writeLog("createNoteFromEvent: Create Meeting Note: " & theFQFN)
 		set content to my createContentForMeetingNote(theEventInfo, theEventAttendees)
 		my writeTextFile(theFQFN, content)
-		if pRemoveCallInBlock then
-			my removeCallInBlock(theFQFN)
-		end if
 	end if
 	my writeLog("createNoteFromEvent: Finished")
 	return theFQFN
 end createNoteFromEvent
-
-on removeCallInBlock(theFile)
-	my writeLog("removeCallInBlock: Started")
-
-	-- grep -n "Microsoft Teams Need help?" 20250530-1100.md | awk  -F':' ' { print $1 }'
-	set startLineNumber to do shell script "grep -n \"" & (pCallInBlockStartIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
-	set endLineNumber to do shell script "grep -n \"" & (pCallInBlockEndIdentifier as string) & "\" \"" & (theFile as string) & "\" | awk  -F':' ' { print $1 }'"
-	if startLineNumber is "" then
-		my writeLog("removeCallInBlock: Start marker not found - skip note: " & theFile)
-		return
-	end if
-	if endLineNumber is "" then
-		my writeLog("removeCallInBlock: End marker not found - skip note: " & theFile)
-		return
-	end if
-	set startLineNumber to startLineNumber - 1
-	set endLineNumber to endLineNumber + 1
-	if startLineNumber < 1 then
-		set startLineNumber to 1
-	end if
-	if endLineNumber < startLineNumber then
-		my writeLog("removeCallInBlock: Invalid line range - skip note: " & theFile)
-		return
-	end if
-	set sedParameter to startLineNumber & "," & endLineNumber & "d"
-	-- sed -i -e '36,51d' 20250530-1100.md
-	my writeLog("removeCallInBlock: Remove lines: " & startLineNumber & " - " & endLineNumber & " from note: " & theFile)
-	do shell script "sed -i '' -e \"" & sedParameter & "\" \"" & (theFile as string) & "\""
-
-	my writeLog("removeCallInBlock: Finished")
-end removeCallInBlock
 
 on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	my writeLog("createContentForMeetingNote: Started")
@@ -262,8 +225,8 @@ on createContentForMeetingNote(theEventInfo, theEventAttendees)
 	try
 		set theDescription to (event_description of theEventInfo as string)
 	end try
+	set theDescription to my cleanMeetingDescription(theDescription, my getMeetingDescriptionTrimMarkers())
 	set content to my renderMeetingNoteTemplate(theDay, theStart, theEnd, numberTotal, numberAccepted, numberDeclined, numberTentative, numberOther, theTasks, theSummary, theTime, chairEntry, requiredEntries, optionalEntries, theDescription)
-	my writeLog(content)
 	my writeLog("createContentForMeetingNote: Finished")
 	return content
 end createContentForMeetingNote
@@ -303,6 +266,134 @@ on loadMeetingNoteTemplate()
 	my writeLog("loadMeetingNoteTemplate: Finished")
 	return templateContent
 end loadMeetingNoteTemplate
+
+on getMeetingDescriptionTrimMarkers()
+	try
+		return pMeetingDescriptionTrimMarkers of configFile
+	on error
+		return {}
+	end try
+end getMeetingDescriptionTrimMarkers
+
+on cleanMeetingDescription(theDescription, trimMarkers)
+	my writeLog("cleanMeetingDescription: Started")
+
+	if theDescription is missing value then return ""
+	set cleanedDescription to theDescription as string
+	if trimMarkers is missing value then
+		set cleanedDescription to my trimTrailingWhitespace(cleanedDescription)
+		my writeLog("cleanMeetingDescription: Finished - no markers configured")
+		return cleanedDescription
+	end if
+	if (count of trimMarkers) is 0 then
+		set cleanedDescription to my trimTrailingWhitespace(cleanedDescription)
+		my writeLog("cleanMeetingDescription: Finished - empty marker list")
+		return cleanedDescription
+	end if
+
+	set nsDescription to current application's NSString's stringWithString:cleanedDescription
+	set firstMarkerLocation to missing value
+
+	repeat with marker in trimMarkers
+		set markerText to marker as string
+		if markerText is not "" then
+			set foundRange to (nsDescription's rangeOfString:markerText options:(current application's NSCaseInsensitiveSearch))
+			set foundLocation to foundRange's location() as integer
+			if foundLocation is not (current application's NSNotFound) then
+				if firstMarkerLocation is missing value or foundLocation < firstMarkerLocation then
+					set firstMarkerLocation to foundLocation
+				end if
+			end if
+		end if
+	end repeat
+
+	if firstMarkerLocation is not missing value then
+		set nsDescription to nsDescription's substringToIndex:firstMarkerLocation
+		set cleanedDescription to nsDescription as text
+		set cleanedDescription to my trimTrailingSeparatorLines(cleanedDescription)
+	else
+		set cleanedDescription to nsDescription as text
+	end if
+
+	set cleanedDescription to my trimTrailingWhitespace(cleanedDescription)
+	my writeLog("cleanMeetingDescription: Finished")
+	return cleanedDescription
+end cleanMeetingDescription
+
+on trimTrailingSeparatorLines(theText)
+	if theText is missing value then return ""
+
+	set NSString to current application's NSString's stringWithString:(theText as string)
+	set normalizedText to (NSString's stringByReplacingOccurrencesOfString:(return) withString:(linefeed)) as text
+	set oldTIDs to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to linefeed
+	set textLines to text items of normalizedText
+
+	repeat while (count of textLines) > 0
+		set lastLine to item -1 of textLines as string
+		set normalizedLastLine to my trimBoundaryWhitespace(lastLine)
+		if normalizedLastLine is "" or my isSeparatorLine(normalizedLastLine) then
+			if (count of textLines) is 1 then
+				set textLines to {}
+			else
+				set textLines to items 1 thru -2 of textLines
+			end if
+		else
+			exit repeat
+		end if
+	end repeat
+
+	if (count of textLines) is 0 then
+		set cleanedText to ""
+	else
+		set AppleScript's text item delimiters to linefeed
+		set cleanedText to textLines as text
+	end if
+	set AppleScript's text item delimiters to oldTIDs
+	return cleanedText
+end trimTrailingSeparatorLines
+
+on trimBoundaryWhitespace(theText)
+	set trimmedText to my trimLeadingWhitespace(theText)
+	return my trimTrailingWhitespace(trimmedText)
+end trimBoundaryWhitespace
+
+on trimLeadingWhitespace(theText)
+	if theText is missing value then return ""
+	set trimmedText to theText as string
+	repeat while trimmedText is not "" and ((trimmedText starts with linefeed) or (trimmedText starts with return) or (trimmedText starts with space) or (trimmedText starts with tab))
+		if (length of trimmedText) is 1 then
+			set trimmedText to ""
+		else
+			set trimmedText to text 2 thru -1 of trimmedText
+		end if
+	end repeat
+	return trimmedText
+end trimLeadingWhitespace
+
+on trimTrailingWhitespace(theText)
+	if theText is missing value then return ""
+	set trimmedText to theText as string
+	repeat while trimmedText is not "" and ((trimmedText ends with linefeed) or (trimmedText ends with return) or (trimmedText ends with space) or (trimmedText ends with tab))
+		if (length of trimmedText) is 1 then
+			set trimmedText to ""
+		else
+			set trimmedText to text 1 thru -2 of trimmedText
+		end if
+	end repeat
+	return trimmedText
+end trimTrailingWhitespace
+
+on isSeparatorLine(theText)
+	if theText is missing value then return false
+	set separatorText to theText as string
+	if separatorText is "" then return false
+	repeat with i from 1 to length of separatorText
+		set currentCharacter to character i of separatorText
+		if currentCharacter is not "_" and currentCharacter is not "-" then return false
+	end repeat
+	return true
+end isSeparatorLine
 
 on writeTextFile(theFile, theContent)
 	my writeLog("writeTextFile: Started - " & theFile)
@@ -348,7 +439,6 @@ end getChair
 
 on createAttendeesList(theAttendees)
 	my writeLog("createAttendeesList: Started")
-	log (theAttendees)
 
 	set number_accepted to 0
 	set number_declined to 0

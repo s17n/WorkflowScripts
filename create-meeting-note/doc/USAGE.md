@@ -81,6 +81,16 @@ Verfuegbare Platzhalter im Standard-Template:
 - `{{time}}`
 - `{{description}}`
 
+## Teams-Block in der Description
+
+Microsoft-Teams- bzw. Call-In-Bloecke werden direkt aus der Terminbeschreibung entfernt, bevor die Note gerendert wird.
+
+Die Marker dafuer kommen aus `~/.workflowscripts/config.scpt` als AppleScript-Liste:
+
+- `pMeetingDescriptionTrimMarkers`
+
+Sobald einer dieser Marker in der Description vorkommt, wird die Description ab dem ersten gefundenen Marker bis zum Ende abgeschnitten. Uebrig gebliebene Trennzeilen aus Unterstrichen oder Bindestrichen am Ende der Description werden danach zusaetzlich entfernt.
+
 ## Voraussetzungen
 
 - macOS mit Zugriff auf den Kalender
@@ -96,7 +106,7 @@ Die aufrufende Anwendung, typischerweise Script Editor oder PopClip, braucht Kal
 
 - Wenn eine Notiz bereits existiert, wird sie im aktuellen Stand ueberschrieben.
 - Das Modul hat im aktuellen Stand keinen Hazel-Einstiegspunkt mehr.
-- Wenn beim Entfernen des Call-In-Blocks Start- oder Endmarker fehlen, wird der Schritt uebersprungen und die Notiz unveraendert belassen.
+- Wenn `pMeetingDescriptionTrimMarkers` fehlt oder leer ist, wird die Description nicht bereinigt.
 
 ## Logfile
 

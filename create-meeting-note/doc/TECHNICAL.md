@@ -35,9 +35,8 @@ Die Notiz enthaelt:
 5. `resolveCalendars(...)` sammelt bevorzugt Exchange-, iCloud- und lokale Kalender und durchsucht diese gemeinsam.
 6. `createNoteFromEvent(...)` sammelt Event-Info und Attendees, erzeugt den Dateinamen `YYYYMMDD-HHMM.md`, schreibt den Markdown-Inhalt und setzt die Zwischenablage.
 7. `createContentForMeetingNote(...)` berechnet Frontmatter, Aufgaben, Teilnehmertext und Description.
-8. `renderMeetingNoteTemplate(...)` laedt `templates/meeting-note.md` und ersetzt die Platzhalter.
-9. Optional entfernt `removeCallInBlock(...)` einen Block aus der geschriebenen Datei per `grep`, `awk` und `sed`.
-10. Wenn Start- oder Endmarker fuer den Call-In-Block fehlen, wird der Entfernungsschritt geloggt und uebersprungen.
+8. `cleanMeetingDescription(...)` entfernt Teams-/Call-In-Bloecke direkt aus der Description auf Basis konfigurierbarer Marker aus `config.scpt` und entfernt danach verbleibende Separator-Zeilen am Ende, aber nur wenn zuvor ein Marker getroffen wurde.
+9. `renderMeetingNoteTemplate(...)` laedt `templates/meeting-note.md` und ersetzt die Platzhalter.
 
 ## Sequenzdiagramm
 
@@ -102,9 +101,8 @@ Das Skript erwartet diese Properties in `~/.workflowscripts/config.scpt`:
 - `pWorkflowScriptsBaseFolder`
 - `pLastname`
 - `pOverwriteExistingNote`
-- `pRemoveCallInBlock`
-- `pCallInBlockStartIdentifier`
-- `pCallInBlockEndIdentifier`
+- `pMeetingDescriptionTrimMarkers`
+  Erwartet eine AppleScript-Liste von Strings.
 
 Logfile:
 
@@ -130,5 +128,5 @@ Template-Datei:
 - `pOverwriteExistingNote` ist im Skript hart auf `true` gesetzt und ignoriert damit den Konfigurationswert.
 - Der Kalenderzugriff durchsucht bevorzugt Exchange-, iCloud- und lokale Kalender gemeinsam und faellt sonst auf alle verfuegbaren Kalender zurueck.
 - Wenn die Template-Datei fehlt, bricht das Skript mit einem klaren Fehler auf `loadMeetingNoteTemplate(...)` ab.
-- `removeCallInBlock(...)` prueft jetzt auf fehlende Start- und Endmarker und bricht in diesem Fall kontrolliert ohne Dateiaenderung ab.
+- Wenn `pMeetingDescriptionTrimMarkers` fehlt oder leer ist, bleibt die Description unveraendert.
 - `createContentForMeetingNote(...)` schreibt den kompletten generierten Note-Inhalt ins Logfile. Das ist fuer Debugging nuetzlich, aber inhaltlich sehr ausfuehrlich.
