@@ -34,7 +34,8 @@ etc.).
 - [DEVONthink CSS](./devonthink-css/README.md)  
   CSS profile for DEVONthink markdown rendering.
 - [Sleep Wake to File](./sleep-wake-to-file/README.md)  
-  Exports sleep/wake events from `pmset` to daily log files.
+  Exports sleep/wake events, calculates screentime metrics, and syncs values
+  into daily-note frontmatter.
 
 ### Additional scripts (currently without dedicated README)
 

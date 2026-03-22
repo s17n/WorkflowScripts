@@ -1,27 +1,19 @@
-Ein Skript zum Auslesen der `Sleep/Wake Events` aus dem MacOS [Power Management Settings mit pmset](../../../Zettelkasten/Power%20Management%20Settings%20mit%20pmset.md).
+# Sleep Wake to File
 
-Das Skript ließt die Events der letzten 6 Tage aus - exklusive des aktuellen Tages - und schreibt sie pro Tag in eine Datei in`./logs`. Falls die Datei schon existiert wird der Tag übersprungen.
+Ein Modul zum Erfassen und Auswerten von Sleep/Wake-Events aus `pmset` sowie zum Synchronisieren der Tageswerte in Obsidian-Daily-Notes.
 
-Das Skript wird idealerweise als cronjob ins System eingebunden - mit täglich einmaliger Ausführung - so, das eine lückenlose History der Sleep/Wake Events erstellt werden kann. Voraussetzung dafür ist, dass das Skript mindestens einmal alle 6 Tage ausgeführt wird.
+Das Modul besteht aus:
 
-Die Sleep/Wake-Meldungen können dann z.B. wie folgt aus den Logs ausgelesen werden.
+- `sleep-wake-to-file/sleep-wake-to-file.sh`
+  Exportiert Sleep/Wake-Events der letzten 6 Tage in Tages-Logs unter `sleep-wake-to-file/logs/`.
+- `sleep-wake-to-file/screentime.awk`
+  Berechnet aus den Events die Session-Zeiten und Tagesmetriken.
+- `sleep-wake-to-file/sync-daily-note-frontmatter.py`
+  Schreibt die berechneten Werte in YAML-Frontmatter einer Daily Note.
+- `sleep-wake-to-file/Screentime - Report.md`
+  Beispiel fuer die Auswertung direkt in Obsidian per Execute-Code-Plugin.
 
-Auslesen der **Wake-Meldungen**:
+Weiterfuehrende Dokumentation:
 
-````bash
-#date="2025-03-03"                     # individual day
-#date=$(date +"%Y-%m-%d")              # today
-date=$(gdate -d"-1 days" +%Y-%m-%d)    # yesterday
-file=~/Projects/WorkflowScripts/sleep-wake-to-file/logs/pmset-sleep-wake_"$date".log
-cat "$file" | grep -e " Wake  " | grep "$date" | head -n 1
-````
-
-Auslesen der **Sleep-Meldungen**:
-
-````bash
-#date="2025-03-03"                     # individual day
-#date=$(date +"%Y-%m-%d")              # today
-date=$(gdate -d"-1 days" +%Y-%m-%d)    # yesterday -1
-file=~/Projects/WorkflowScripts/sleep-wake-to-file/logs/pmset-sleep-wake_"$date".log
-cat "$file" |grep -e "Entering Sleep state due to \'Clamshell Sleep\'" | grep "$date"
-````
+- [Nutzerdokumentation](./doc/USAGE.md)
+- [Technische Dokumentation](./doc/TECHNICAL.md)
