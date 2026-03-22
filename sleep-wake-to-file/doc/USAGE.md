@@ -7,7 +7,7 @@ Das Modul erfasst Sleep/Wake-Events ueber `pmset`, berechnet daraus taegliche Bi
 Es gibt drei typische Nutzungsarten:
 
 - Tageslogs erzeugen (`sleep-wake-to-file.sh`)
-- Werte anzeigen (`screentime.awk` oder `Screentime - Report.md`)
+- Werte anzeigen (`screentime.awk` oder `doc/Screentime - Report.md`)
 - Werte in YAML-Frontmatter synchronisieren (`sync-daily-note-frontmatter.py`)
 
 ## 1) Tageslogs erzeugen

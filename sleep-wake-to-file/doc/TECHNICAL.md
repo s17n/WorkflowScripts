@@ -16,7 +16,7 @@ Das Modul kombiniert drei Schritte:
   Auswertung der Sessions und Ausgabe in Human- oder KV-Format.
 - `sleep-wake-to-file/sync-daily-note-frontmatter.py`
   Schreibt Werte in Daily-Notes unter Beruecksichtigung von unset-Regeln.
-- `sleep-wake-to-file/Screentime - Report.md`
+- `sleep-wake-to-file/doc/Screentime - Report.md`
   Obsidian-Report-Snippet fuer Execute-Code.
 
 ## Datenfluss
