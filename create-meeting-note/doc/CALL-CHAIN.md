@@ -5,7 +5,7 @@ Das folgende Sequenzdiagramm zeigt die Standard-Call-Chain des Workflows.
 ```mermaid
 sequenceDiagram
     actor User as User / PopClip
-    participant Script as "Create Meeting Note from Calendar Entry.scpt"
+    participant Script as "Create Meeting Note.scpt"
     participant Config as "~/.workflowscripts/config.scpt"
     participant GDate as "gdate"
     participant CalLib as "CalendarLib EC"

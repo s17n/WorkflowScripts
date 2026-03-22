@@ -4,7 +4,7 @@ use framework "Foundation"
 use script "CalendarLib EC" version "1.1.5" -- put this at the top of your scripts
 use scripting additions
 
-property pScriptName : "Create Meeting Note from Calendar Entry.scpt"
+property pScriptName : "Create Meeting Note.scpt"
 
 property configFile : load script (POSIX path of (path to home folder) & ".workflowscripts/config.scpt")
 property pInboxFolder : pZettelkastenInboxFolder of configFile
@@ -12,7 +12,7 @@ property pWorkflowScriptsBaseFolder : pWorkflowScriptsBaseFolder of configFile
 property pMeetingNoteTemplateFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/templates/meeting-note.md"
 property pLastname : pLastname of configFile
 property pOverwriteExistingNoteDefault : pOverwriteExistingNote of configFile
-property pLogFile : pWorkflowScriptsBaseFolder & "/create-meeting-note/logs/execution.log"
+property pLogFile : pWorkflowScriptsBaseFolder & "/logs/execution.log"
 property pOverwriteExistingNote : true --pOverwriteExistingNoteDefault
 
 on run {}
@@ -582,3 +582,4 @@ on writeLog(theMessage)
 	set msg to timestamp & ": " & pScriptName & ": " & theMessage
 	do shell script "echo " & quoted form of msg & " >> " & pLogFile
 end writeLog
+

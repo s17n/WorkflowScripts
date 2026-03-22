@@ -13,7 +13,7 @@ Die Notiz enthaelt:
 
 ## Komponenten
 
-- `create-meeting-note/Create Meeting Note from Calendar Entry.scpt`
+- `create-meeting-note/Create Meeting Note.scpt`
   Kompilierter AppleScript-Einstiegspunkt fuer manuelle Nutzung.
 - `create-meeting-note/README.md`
   Modulueberblick.
@@ -122,7 +122,7 @@ Template-Datei:
 
 ## Ist-Zustand und bekannte Probleme
 
-- Die produktive Laufzeitdatei ist ausschliesslich `Create Meeting Note from Calendar Entry.scpt`.
+- Die produktive Laufzeitdatei ist ausschliesslich `Create Meeting Note.scpt`.
 - Es liegt keine menschenlesbare `*.applescript`-Quelldatei im Modul vor.
 - Das Modul hat im aktuellen Stand keinen Hazel-Einstiegspunkt.
 - `pOverwriteExistingNote` ist im Skript hart auf `true` gesetzt und ignoriert damit den Konfigurationswert.
