@@ -16,6 +16,8 @@ Das Modul kombiniert drei Schritte:
   Auswertung der Sessions und Ausgabe in Human- oder KV-Format.
 - `sleep-wake-to-file/sync-daily-note-frontmatter.py`
   Schreibt Werte in Daily-Notes unter Beruecksichtigung von unset-Regeln.
+- `sleep-wake-to-file/sync-last-7-days.sh`
+  Wrapper fuer den Batch-Sync der letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron.
 - `sleep-wake-to-file/doc/Screentime - Report.md`
   Obsidian-Report-Snippet fuer Execute-Code.
 
@@ -29,44 +31,45 @@ Das Modul kombiniert drei Schritte:
    - bevorzugt `sleep-wake-to-file/logs/pmset-sleep-wake_<date>.log`
    - fallback auf gefiltertes `pmset -g log`
 4. Python mappt die AWK-Werte in YAML und schreibt nur fehlende/ungefuellte Felder.
+5. `sync-last-7-days.sh` berechnet die Datumswerte `today-1` bis `today-7` und ruft den Python-Sync fuer jedes Datum auf.
 
 ## AWK-Ausgabe
 
 Human-Ausgabe:
 
 - Session-Zeilen `HH:MM:SS - HH:MM:SS: HH:MM`
-- Tageszusammenfassung mit `Screentime`, `first_screen_on`, `last_screen_off`, `duration`, `duration_off_screentime`, `Plausibility`
+- Tageszusammenfassung mit `Screentime`, `firstOn`, `lastOff`, `duration`, `durationOff`, `Plausibility`
 
 KV-Ausgabe (`-v output=kv`):
 
-- `first_screen_on`
-- `last_screen_off`
+- `firstOn`
+- `lastOff`
 - `duration`
-- `duration_off_screentime`
+- `durationOff`
 - `screentime`
 - `session_count`
 - `plausibility`
 
 ## YAML-Mapping in Python
 
-AWK -> primaere Keys:
+AWK -> Zielstruktur im Frontmatter:
 
-- `first_screen_on` -> `firstScreenOn`
-- `last_screen_off` -> `lastScreenOff`
-- `duration` -> `duration`
-- `duration_off_screentime` -> `durationOffScreen`
+- `firstOn` -> `mac.firstOn`
+- `lastOff` -> `mac.lastOff`
+- `duration` -> `mac.duration`
+- `durationOff` -> `mac.durationOff`
 
-Zusatz (Legacy, nur falls unset):
+Initialisierung unter `worktime` (nur falls unset):
 
-- `first_screen_on` -> `Start`
-- `last_screen_off` -> `End`
-- `duration_off_screentime` -> `breaktime`
-- `duration` -> `worktime`
+- `worktime.start <- mac.firstOn`
+- `worktime.end <- mac.lastOff`
+- `worktime.break <- mac.durationOff`
 
 Zeitnormalisierung:
 
-- `first_screen_on` und `last_screen_off` werden auf `HH:MM` reduziert.
-- Duration-Werte bleiben `HH:MM`.
+- `mac.firstOn`, `mac.lastOff`, `worktime.start`, `worktime.end` werden als `YYYY-MM-DDTHH:MM` geschrieben.
+- `mac.duration`, `mac.durationOff`, `worktime.break` werden als `HhMMm` geschrieben (z. B. `10h35m`).
+- Die AWK-KV-Durations bleiben `HH:MM`; die Umformatierung passiert erst im Python-Sync.
 
 ## Schreibregeln
 

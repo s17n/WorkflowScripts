@@ -111,18 +111,18 @@ END {
 
     if (outputMode == "kv") {
         if (sessionCount > 0) {
-            print "first_screen_on=" earliestStartTime;
-            print "last_screen_off=" latestEndTime;
+            print "firstOn=" earliestStartTime;
+            print "lastOff=" latestEndTime;
             print "duration=" formatDuration(worktimeSec);
-            print "duration_off_screentime=" breakTimeText;
+            print "durationOff=" breakTimeText;
             print "screentime=" totalText;
             print "session_count=" sessionCount;
             print "plausibility=" plausibility;
         } else {
-            print "first_screen_on=-";
-            print "last_screen_off=-";
+            print "firstOn=-";
+            print "lastOff=-";
             print "duration=00:00";
-            print "duration_off_screentime=00:00";
+            print "durationOff=00:00";
             print "screentime=00:00";
             print "session_count=0";
             print "plausibility=n/a (keine Sessions)";
@@ -131,16 +131,16 @@ END {
         printf "Screentime: %s\n", totalText;
 
         if (sessionCount > 0) {
-            printf "first_screen_on: %s\n", earliestStartTime;
-            printf "last_screen_off: %s\n", latestEndTime;
+            printf "firstOn: %s\n", earliestStartTime;
+            printf "lastOff: %s\n", latestEndTime;
             printf "duration: %s\n", formatDuration(worktimeSec);
-            printf "duration_off_screentime: %s\n", breakTimeText;
+            printf "durationOff: %s\n", breakTimeText;
             printf "Plausibility: %s\n", plausibility;
         } else {
-            print "first_screen_on: -";
-            print "last_screen_off: -";
+            print "firstOn: -";
+            print "lastOff: -";
             print "duration: 00:00";
-            print "duration_off_screentime: 00:00";
+            print "durationOff: 00:00";
             print "Plausibility: n/a (keine Sessions)";
         }
 

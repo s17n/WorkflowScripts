@@ -52,10 +52,10 @@ pmset -g log | grep -e "$date" | grep -e " Sleep  " -e " Wake  " | awk -v output
 
 KV-Keys:
 
-- `first_screen_on`
-- `last_screen_off`
+- `firstOn`
+- `lastOff`
 - `duration`
-- `duration_off_screentime`
+- `durationOff`
 - `screentime`
 - `session_count`
 - `plausibility`
@@ -90,19 +90,18 @@ Write-Modus:
 
 ## YAML-Zielattribute
 
-Primaere Attribute:
+Unter `mac` (nur falls unset):
 
-- `firstScreenOn`
-- `lastScreenOff`
-- `duration`
-- `durationOffScreen`
+- `firstOn` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
+- `lastOff` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
+- `duration` (Format `HhMMm`, z. B. `10h35m`)
+- `durationOff` (Format `HhMMm`, z. B. `1h20m`)
 
-Legacy-Attribute (nur falls unset):
+Unter `worktime` (nur falls unset):
 
-- `Start`
-- `End`
-- `breaktime`
-- `worktime`
+- `start <- mac.firstOn` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
+- `end <- mac.lastOff` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
+- `break <- mac.durationOff` (Format `HhMMm`)
 
 Unset bedeutet:
 
@@ -119,3 +118,18 @@ Wenn fuer den Tag keine Sessions ermittelt werden:
 - keine Datei-/YAML-Aenderung
 - Rueckgabecode `0`
 - Konsolenmeldung: `No sessions found for <date>. Nothing to write.`
+
+## 4) Batch-Sync fuer cron (letzte 7 Tage)
+
+Das Wrapper-Skript ruft den Daily-Sync fuer die letzten 7 Tage auf (ohne den aktuellen Tag):
+
+```bash
+./sleep-wake-to-file/sync-last-7-days.sh \
+  --daily-root "/Pfad/zu/DailyNotes"
+```
+
+Beispiel fuer `crontab` (taeglich um 01:30 Uhr):
+
+```cron
+30 1 * * * /Users/steffen/Projects/WorkflowScripts/sleep-wake-to-file/sync-last-7-days.sh --daily-root "/Pfad/zu/DailyNotes" >> /tmp/sleep-wake-sync.log 2>&1
+```

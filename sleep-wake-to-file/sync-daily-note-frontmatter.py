@@ -11,17 +11,19 @@ from datetime import datetime
 from pathlib import Path
 
 
-KEY_ORDER = (
-    "firstScreenOn",
-    "lastScreenOff",
-    "duration",
-    "durationOffScreen",
-    "Start",
-    "End",
-    "breaktime",
-    "worktime",
+TARGET_PATHS = (
+    ("mac", "firstOn"),
+    ("mac", "lastOff"),
+    ("mac", "duration"),
+    ("mac", "durationOff"),
+    ("worktime", "start"),
+    ("worktime", "end"),
+    ("worktime", "break"),
 )
-KEY_PATTERN = re.compile(r"^([A-Za-z0-9_-]+)\s*:(.*)$")
+TOP_LEVEL_PATTERN = re.compile(r"^([A-Za-z0-9_-]+)\s*:(.*)$")
+NESTED_PATTERN = re.compile(r"^\s+([A-Za-z0-9_-]+)\s*:(.*)$")
+TIME_PATTERN = re.compile(r"^(\d{2}):(\d{2})(?::\d{2})?$")
+DURATION_PATTERN = re.compile(r"^(\d+):(\d{2})(?::\d{2})?$")
 EMPTY_MARKERS = {"", "~", '""', "''"}
 
 
@@ -31,11 +33,19 @@ class SourceData:
     payload: str
 
 
+@dataclass
+class SectionInfo:
+    parent_index: int
+    parent_raw: str
+    block_end: int
+    children: dict[str, tuple[int, str]]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Sync screentime metrics into daily-note frontmatter "
-            "(keys: firstScreenOn, lastScreenOff, duration, durationOffScreen)."
+            "(keys: mac.firstOn, mac.lastOff, mac.duration, mac.durationOff)."
         )
     )
     parser.add_argument(
@@ -126,13 +136,31 @@ def run_awk_metrics(awk_path: Path, payload: str) -> dict[str, str]:
     return values
 
 
-def to_hhmm(value: str) -> str:
-    if value == "-":
+def to_iso8601_without_seconds(date_text: str, time_value: str) -> str:
+    if time_value == "-":
+        return time_value
+    match = TIME_PATTERN.fullmatch(time_value)
+    if not match:
+        return time_value
+    hour = match.group(1)
+    minute = match.group(2)
+    return f"{date_text}T{hour}:{minute}"
+
+
+def to_duration_hm(value: str) -> str:
+    sign = ""
+    raw = value
+    if raw.startswith("-"):
+        sign = "-"
+        raw = raw[1:]
+
+    match = DURATION_PATTERN.fullmatch(raw)
+    if not match:
         return value
-    match = re.fullmatch(r"(\d{2}:\d{2})(?::\d{2})?", value)
-    if match:
-        return match.group(1)
-    return value
+
+    hours = int(match.group(1))
+    minutes = int(match.group(2))
+    return f"{sign}{hours}h{minutes:02d}m"
 
 
 def split_frontmatter(text: str) -> tuple[bool, list[str], str]:
@@ -154,19 +182,57 @@ def split_frontmatter(text: str) -> tuple[bool, list[str], str]:
     return False, [], text
 
 
-def parse_frontmatter_keys(frontmatter_lines: list[str]) -> dict[str, tuple[int, str]]:
-    found: dict[str, tuple[int, str]] = {}
+def parse_frontmatter_structure(
+    frontmatter_lines: list[str],
+) -> tuple[dict[str, tuple[int, str]], dict[str, SectionInfo]]:
+    top_level: dict[str, tuple[int, str]] = {}
+    sections: dict[str, SectionInfo] = {}
+
     for idx, line in enumerate(frontmatter_lines):
-        if not line or line[0].isspace():
+        if not line:
             continue
-        match = KEY_PATTERN.match(line.rstrip("\n"))
+        if line[0].isspace():
+            continue
+
+        line_without_newline = line.rstrip("\n")
+        match = TOP_LEVEL_PATTERN.match(line_without_newline)
         if not match:
             continue
-        key = match.group(1).strip()
+
+        parent = match.group(1).strip()
         raw_value = match.group(2).strip()
-        if key not in found:
-            found[key] = (idx, raw_value)
-    return found
+        if parent not in top_level:
+            top_level[parent] = (idx, raw_value)
+
+        children: dict[str, tuple[int, str]] = {}
+        block_end = idx + 1
+        scan = idx + 1
+        while scan < len(frontmatter_lines):
+            child_line = frontmatter_lines[scan]
+            if not child_line:
+                break
+            if not child_line[0].isspace():
+                break
+
+            child_without_newline = child_line.rstrip("\n")
+            child_match = NESTED_PATTERN.match(child_without_newline)
+            if child_match and not child_line.lstrip().startswith("#"):
+                child_key = child_match.group(1).strip()
+                child_raw = child_match.group(2).strip()
+                if child_key not in children:
+                    children[child_key] = (scan, child_raw)
+            scan += 1
+            block_end = scan
+
+        if parent not in sections:
+            sections[parent] = SectionInfo(
+                parent_index=idx,
+                parent_raw=raw_value,
+                block_end=block_end,
+                children=children,
+            )
+
+    return top_level, sections
 
 
 def is_unset(raw_value: str) -> bool:
@@ -183,39 +249,78 @@ def is_unset(raw_value: str) -> bool:
 
 
 def plan_updates(
-    existing: dict[str, tuple[int, str]], updates: dict[str, str]
+    top_level: dict[str, tuple[int, str]],
+    sections: dict[str, SectionInfo],
+    updates: dict[str, str],
 ) -> list[tuple[str, str, str]]:
     actions: list[tuple[str, str, str]] = []
-    for key in KEY_ORDER:
-        if key not in updates:
+
+    for parent, child in TARGET_PATHS:
+        path = f"{parent}.{child}"
+        if path not in updates:
             continue
-        if key not in existing:
-            actions.append((key, "write", "missing"))
+
+        if parent not in top_level:
+            actions.append((path, "write", "missing-parent"))
             continue
-        _, raw_value = existing[key]
-        if is_unset(raw_value):
-            actions.append((key, "write", "empty"))
-        else:
-            actions.append((key, "skip", "already-set"))
+
+        section = sections.get(parent)
+        parent_raw = top_level[parent][1]
+        child_entry = section.children.get(child) if section else None
+
+        if child_entry:
+            _idx, child_raw = child_entry
+            if is_unset(child_raw):
+                actions.append((path, "write", "empty-child"))
+            else:
+                actions.append((path, "skip", "already-set"))
+            continue
+
+        if parent_raw and not is_unset(parent_raw):
+            actions.append((path, "skip", "parent-not-map"))
+            continue
+
+        actions.append((path, "write", "missing-child"))
+
     return actions
 
 
 def apply_updates(
     frontmatter_lines: list[str],
-    existing: dict[str, tuple[int, str]],
     updates: dict[str, str],
     actions: list[tuple[str, str, str]],
 ) -> list[str]:
+    action_by_path = {path: (action, reason) for path, action, reason in actions}
     output = list(frontmatter_lines)
-    for key, action, _reason in actions:
+
+    for parent, child in TARGET_PATHS:
+        path = f"{parent}.{child}"
+        decision = action_by_path.get(path)
+        if decision is None:
+            continue
+        action, _reason = decision
         if action != "write":
             continue
-        line = f"{key}: {updates[key]}\n"
-        if key in existing:
-            idx, _ = existing[key]
-            output[idx] = line
-        else:
-            output.append(line)
+
+        top_level, sections = parse_frontmatter_structure(output)
+        child_line = f"  {child}: {updates[path]}\n"
+
+        if parent in sections and child in sections[parent].children:
+            child_index, _raw = sections[parent].children[child]
+            output[child_index] = child_line
+            continue
+
+        if parent in top_level:
+            parent_raw = top_level[parent][1]
+            if parent_raw and not is_unset(parent_raw):
+                continue
+            insert_at = sections[parent].block_end if parent in sections else top_level[parent][0] + 1
+            output.insert(insert_at, child_line)
+            continue
+
+        output.append(f"{parent}:\n")
+        output.append(child_line)
+
     return output
 
 
@@ -251,14 +356,14 @@ def print_summary(
     print(f"Date: {target_date}")
     print(f"Source: {source_label}")
     print(f"Note: {note_path}")
-    print("Computed values (from AWK):")
-    print(f"  first_screen_on: {computed['first_screen_on']}")
-    print(f"  last_screen_off: {computed['last_screen_off']}")
-    print(f"  duration: {computed['duration']}")
-    print(f"  duration_off_screentime: {computed['duration_off_screentime']}")
+    print("Computed values:")
+    print(f"  mac.firstOn: {computed['mac.firstOn']}")
+    print(f"  mac.lastOff: {computed['mac.lastOff']}")
+    print(f"  mac.duration: {computed['mac.duration']}")
+    print(f"  mac.durationOff: {computed['mac.durationOff']}")
     print("Field actions:")
-    for key, action, reason in actions:
-        print(f"  {key}: {action} ({reason})")
+    for path, action, reason in actions:
+        print(f"  {path}: {action} ({reason})")
 
 
 def main() -> int:
@@ -278,27 +383,26 @@ def main() -> int:
         print(f"No sessions found for {date_text}. Nothing to write.")
         return 0
 
-    first_screen_on = to_hhmm(metrics.get("first_screen_on", "-"))
-    last_screen_off = to_hhmm(metrics.get("last_screen_off", "-"))
-    duration_on = metrics.get("duration", "00:00")
-    duration_off = metrics.get("duration_off_screentime", "00:00")
+    first_on = to_iso8601_without_seconds(date_text, metrics.get("firstOn", "-"))
+    last_off = to_iso8601_without_seconds(date_text, metrics.get("lastOff", "-"))
+    duration_on = to_duration_hm(metrics.get("duration", "00:00"))
+    duration_off = to_duration_hm(metrics.get("durationOff", "00:00"))
 
     updates = {
-        "firstScreenOn": first_screen_on,
-        "lastScreenOff": last_screen_off,
-        "duration": duration_on,
-        "durationOffScreen": duration_off,
-        "Start": first_screen_on,
-        "End": last_screen_off,
-        "breaktime": duration_off,
-        "worktime": duration_on,
+        "mac.firstOn": first_on,
+        "mac.lastOff": last_off,
+        "mac.duration": duration_on,
+        "mac.durationOff": duration_off,
+        "worktime.start": first_on,
+        "worktime.end": last_off,
+        "worktime.break": duration_off,
     }
 
     computed = {
-        "first_screen_on": first_screen_on,
-        "last_screen_off": last_screen_off,
-        "duration": duration_on,
-        "duration_off_screentime": duration_off,
+        "mac.firstOn": first_on,
+        "mac.lastOff": last_off,
+        "mac.duration": duration_on,
+        "mac.durationOff": duration_off,
     }
 
     note_path = build_note_path(daily_root, target_date)
@@ -308,8 +412,8 @@ def main() -> int:
         current_text = ""
 
     _has_frontmatter, frontmatter_lines, body = split_frontmatter(current_text)
-    existing = parse_frontmatter_keys(frontmatter_lines)
-    actions = plan_updates(existing, updates)
+    top_level, sections = parse_frontmatter_structure(frontmatter_lines)
+    actions = plan_updates(top_level, sections, updates)
 
     print_summary(
         target_date=date_text,
@@ -323,11 +427,11 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    if not any(action == "write" for _key, action, _reason in actions):
+    if not any(action == "write" for _path, action, _reason in actions):
         print("Write result: no changes (all fields already set).")
         return 0
 
-    updated_frontmatter_lines = apply_updates(frontmatter_lines, existing, updates, actions)
+    updated_frontmatter_lines = apply_updates(frontmatter_lines, updates, actions)
     new_document = build_document(updated_frontmatter_lines, body)
 
     note_path.parent.mkdir(parents=True, exist_ok=True)

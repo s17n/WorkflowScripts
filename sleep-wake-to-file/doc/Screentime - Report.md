@@ -7,7 +7,7 @@ Beispielaufruf zum Schreiben der Werte in die Daily Note (Execute-Code):
 project_dir="$HOME/Projects/WorkflowScripts/sleep-wake-to-file"
 zk_root="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten"
 daily_root="$zk_root/Journal"
-date=$(gdate -d"-1 days" +%Y-%m-%d)
+date=$(gdate -d"-0 days" +%Y-%m-%d)
 
 # dry-run (nur Vorschau)
 "$project_dir/sync-daily-note-frontmatter.py" \

@@ -10,6 +10,8 @@ Das Modul besteht aus:
   Berechnet aus den Events die Session-Zeiten und Tagesmetriken.
 - `sleep-wake-to-file/sync-daily-note-frontmatter.py`
   Schreibt die berechneten Werte in YAML-Frontmatter einer Daily Note.
+- `sleep-wake-to-file/sync-last-7-days.sh`
+  Batch-Sync fuer die letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron.
 - `sleep-wake-to-file/doc/Screentime - Report.md`
   Beispiel fuer die Auswertung direkt in Obsidian per Execute-Code-Plugin.
 
