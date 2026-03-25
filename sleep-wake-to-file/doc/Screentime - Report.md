@@ -30,7 +30,7 @@ date=$(gdate -d"-1 days" +%Y-%m-%d)
 
 ## awk
 
-Übersicht der Zeiten (von/bis, Dauer, Total) pro Tag, in denen der Mac im FullWake mit eingeschaltetem Display war. 
+Uebersicht der taeglichen Awake-Session- und ScreenTime-Werte auf Basis von Sleep/Wake- und Display-Events.
 
 ```bash
 project_dir="$HOME/Projects/WorkflowScripts/sleep-wake-to-file"
@@ -40,7 +40,7 @@ do
     gdate -d"-$i days" "+%A, %d.%m.%Y"
     if (( i < 2 )); then
 		pmset -g log | grep -e "$date" \
-		     | grep -e " Sleep  " -e " Wake  " \
+		     | grep -e " Sleep  " -e " Wake  " -e "Display is turned on" -e "Display is turned off" \
 		     | awk -f "$project_dir/screentime.awk"
 	else
 	   log_file="$project_dir/logs/pmset-sleep-wake_$date.log"

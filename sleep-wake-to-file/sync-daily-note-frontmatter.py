@@ -16,9 +16,21 @@ TARGET_PATHS = (
     ("mac", "lastOff"),
     ("mac", "duration"),
     ("mac", "durationOff"),
+    ("mac", "screenTime"),
+    ("mac", "firstScreenOn"),
+    ("mac", "lastScreenOff"),
     ("worktime", "start"),
     ("worktime", "end"),
     ("worktime", "break"),
+)
+SUMMARY_KEYS = (
+    "mac.firstOn",
+    "mac.lastOff",
+    "mac.duration",
+    "mac.durationOff",
+    "mac.screenTime",
+    "mac.firstScreenOn",
+    "mac.lastScreenOff",
 )
 TOP_LEVEL_PATTERN = re.compile(r"^([A-Za-z0-9_-]+)\s*:(.*)$")
 NESTED_PATTERN = re.compile(r"^\s+([A-Za-z0-9_-]+)\s*:(.*)$")
@@ -45,7 +57,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Sync awake-session metrics into daily-note frontmatter "
-            "(keys: mac.firstOn, mac.lastOff, mac.duration, mac.durationOff)."
+            "(keys: mac.firstOn, mac.lastOff, mac.duration, mac.durationOff, "
+            "mac.screenTime, mac.firstScreenOn, mac.lastScreenOff)."
         )
     )
     parser.add_argument(
@@ -83,6 +96,18 @@ def resolve_workflow_root(args: argparse.Namespace) -> Path:
     return Path(__file__).resolve().parent
 
 
+def is_relevant_pmset_line(line: str, date_text: str) -> bool:
+    if date_text not in line:
+        return False
+
+    return (
+        " Sleep  " in line
+        or " Wake  " in line
+        or "Display is turned on" in line
+        or "Display is turned off" in line
+    )
+
+
 def load_source_data(workflow_root: Path, date_text: str) -> SourceData:
     log_path = workflow_root / "logs" / f"pmset-sleep-wake_{date_text}.log"
     if log_path.exists():
@@ -101,9 +126,7 @@ def load_source_data(workflow_root: Path, date_text: str) -> SourceData:
 
     filtered_lines = []
     for line in result.stdout.splitlines():
-        if date_text not in line:
-            continue
-        if " Sleep  " in line or " Wake  " in line:
+        if is_relevant_pmset_line(line, date_text):
             filtered_lines.append(line)
 
     payload = "\n".join(filtered_lines)
@@ -161,6 +184,14 @@ def to_duration_hm(value: str) -> str:
     hours = int(match.group(1))
     minutes = int(match.group(2))
     return f"{sign}{hours}h{minutes:02d}m"
+
+
+def parse_count(values: dict[str, str], key: str) -> int:
+    raw = values.get(key, "0")
+    try:
+        return int(raw)
+    except ValueError:
+        return 0
 
 
 def split_frontmatter(text: str) -> tuple[bool, list[str], str]:
@@ -357,10 +388,9 @@ def print_summary(
     print(f"Source: {source_label}")
     print(f"Note: {note_path}")
     print("Computed values:")
-    print(f"  mac.firstOn: {computed['mac.firstOn']}")
-    print(f"  mac.lastOff: {computed['mac.lastOff']}")
-    print(f"  mac.duration: {computed['mac.duration']}")
-    print(f"  mac.durationOff: {computed['mac.durationOff']}")
+    for key in SUMMARY_KEYS:
+        if key in computed:
+            print(f"  {key}: {computed[key]}")
     print("Field actions:")
     for path, action, reason in actions:
         print(f"  {path}: {action} ({reason})")
@@ -378,32 +408,61 @@ def main() -> int:
     source_data = load_source_data(workflow_root, date_text)
     metrics = run_awk_metrics(workflow_root / "screentime.awk", source_data.payload)
 
-    session_count = int(metrics.get("session_count", "0"))
-    if session_count <= 0:
+    session_count = parse_count(metrics, "session_count")
+    screen_session_count = parse_count(metrics, "screen_session_count")
+
+    if session_count <= 0 and screen_session_count <= 0:
         print(f"No sessions found for {date_text}. Nothing to write.")
         return 0
 
-    first_on = to_iso8601_without_seconds(date_text, metrics.get("firstOn", "-"))
-    last_off = to_iso8601_without_seconds(date_text, metrics.get("lastOff", "-"))
-    duration_on = to_duration_hm(metrics.get("duration", "00:00"))
-    duration_off = to_duration_hm(metrics.get("durationOff", "00:00"))
+    updates: dict[str, str] = {}
+    computed: dict[str, str] = {}
 
-    updates = {
-        "mac.firstOn": first_on,
-        "mac.lastOff": last_off,
-        "mac.duration": duration_on,
-        "mac.durationOff": duration_off,
-        "worktime.start": first_on,
-        "worktime.end": last_off,
-        "worktime.break": duration_off,
-    }
+    if session_count > 0:
+        first_on = to_iso8601_without_seconds(date_text, metrics.get("firstOn", "-"))
+        last_off = to_iso8601_without_seconds(date_text, metrics.get("lastOff", "-"))
+        duration_on = to_duration_hm(metrics.get("duration", "00:00"))
+        duration_off = to_duration_hm(metrics.get("durationOff", "00:00"))
 
-    computed = {
-        "mac.firstOn": first_on,
-        "mac.lastOff": last_off,
-        "mac.duration": duration_on,
-        "mac.durationOff": duration_off,
-    }
+        updates.update(
+            {
+                "mac.firstOn": first_on,
+                "mac.lastOff": last_off,
+                "mac.duration": duration_on,
+                "mac.durationOff": duration_off,
+                "worktime.start": first_on,
+                "worktime.end": last_off,
+                "worktime.break": duration_off,
+            }
+        )
+        computed.update(
+            {
+                "mac.firstOn": first_on,
+                "mac.lastOff": last_off,
+                "mac.duration": duration_on,
+                "mac.durationOff": duration_off,
+            }
+        )
+
+    if screen_session_count > 0:
+        screen_time = to_duration_hm(metrics.get("screenTime", "00:00"))
+        first_screen_on = to_iso8601_without_seconds(date_text, metrics.get("firstScreenOn", "-"))
+        last_screen_off = to_iso8601_without_seconds(date_text, metrics.get("lastScreenOff", "-"))
+
+        updates.update(
+            {
+                "mac.screenTime": screen_time,
+                "mac.firstScreenOn": first_screen_on,
+                "mac.lastScreenOff": last_screen_off,
+            }
+        )
+        computed.update(
+            {
+                "mac.screenTime": screen_time,
+                "mac.firstScreenOn": first_screen_on,
+                "mac.lastScreenOff": last_screen_off,
+            }
+        )
 
     note_path = build_note_path(daily_root, target_date)
     if note_path.exists():

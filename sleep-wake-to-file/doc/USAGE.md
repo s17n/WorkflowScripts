@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Das Modul erfasst Sleep/Wake-Events ueber `pmset`, berechnet daraus taegliche Awake-Session-Zeiten und kann diese Werte in Daily-Notes schreiben.
+Das Modul erfasst Sleep/Wake- und Display-Events ueber `pmset`, berechnet daraus taegliche Awake-Session- und ScreenTime-Werte und kann diese in Daily-Notes schreiben.
 
 Es gibt drei typische Nutzungsarten:
 
@@ -27,13 +27,13 @@ Hinweis:
 - Existierende Tageslogs werden nicht ueberschrieben.
 - Fuer eine lueckenlose Historie sollte das Skript mindestens einmal innerhalb von 6 Tagen laufen (typisch per cron).
 
-## 2) Awake-Session-Werte ausgeben
+## 2) Awake-Session- und ScreenTime-Werte ausgeben
 
 Direkt aus Live-Daten:
 
 ```bash
 date="2026-03-21"
-pmset -g log | grep -e "$date" | grep -e " Sleep  " -e " Wake  " | awk -f ./sleep-wake-to-file/screentime.awk
+pmset -g log | grep -e "$date" | grep -e " Sleep  " -e " Wake  " -e "Display is turned on" -e "Display is turned off" | awk -f ./sleep-wake-to-file/screentime.awk
 ```
 
 Aus einem Archivlog:
@@ -47,7 +47,7 @@ Maschinenlesbare Ausgabe:
 
 ```bash
 date="2026-03-21"
-pmset -g log | grep -e "$date" | grep -e " Sleep  " -e " Wake  " | awk -v output=kv -f ./sleep-wake-to-file/screentime.awk
+pmset -g log | grep -e "$date" | grep -e " Sleep  " -e " Wake  " -e "Display is turned on" -e "Display is turned off" | awk -v output=kv -f ./sleep-wake-to-file/screentime.awk
 ```
 
 KV-Keys:
@@ -59,6 +59,10 @@ KV-Keys:
 - `awakeSessionTime`
 - `session_count`
 - `plausibility`
+- `screenTime`
+- `firstScreenOn`
+- `lastScreenOff`
+- `screen_session_count`
 
 ## 3) Werte in Daily Notes schreiben
 
@@ -96,6 +100,9 @@ Unter `mac` (nur falls unset):
 - `lastOff` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
 - `duration` (Format `HhMMm`, z. B. `10h35m`)
 - `durationOff` (Format `HhMMm`, z. B. `1h20m`)
+- `screenTime` (Format `HhMMm`, z. B. `4h00m`)
+- `firstScreenOn` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
+- `lastScreenOff` (ISO-8601 ohne Sekunden: `YYYY-MM-DDTHH:MM`)
 
 Unter `worktime` (nur falls unset):
 
@@ -113,11 +120,13 @@ Bereits gesetzte Werte werden nicht ueberschrieben.
 
 ## No-Session-Verhalten
 
-Wenn fuer den Tag keine Sessions ermittelt werden:
+Wenn fuer den Tag weder Awake- noch Screen-Sessions ermittelt werden:
 
 - keine Datei-/YAML-Aenderung
 - Rueckgabecode `0`
 - Konsolenmeldung: `No sessions found for <date>. Nothing to write.`
+
+Wenn nur Screen-Sessions vorhanden sind, werden `mac.screenTime`, `mac.firstScreenOn` und `mac.lastScreenOff` trotzdem geschrieben (falls unset).
 
 ## 4) Batch-Sync fuer cron (letzte 7 Tage)
 

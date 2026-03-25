@@ -21,6 +21,6 @@ do
 	logDate="$("$dateBin" "-d-$i days" +"%Y-%m-%d")"
 	logFile="$dirName/logs/pmset-sleep-wake_$logDate.log"
 	if ! [ -f "$logFile" ] ; then
-		pmset -g log | grep -e "$logDate" | grep -e " Sleep  " -e " Wake  " > "$logFile"
+		pmset -g log | grep -e "$logDate" | grep -e " Sleep  " -e " Wake  " -e "Display is turned on" -e "Display is turned off" > "$logFile"
 	fi
 done

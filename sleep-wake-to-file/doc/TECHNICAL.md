@@ -5,7 +5,7 @@
 Das Modul kombiniert drei Schritte:
 
 1. Export von Sleep/Wake-Rohdaten aus `pmset` in Tageslogs
-2. Berechnung von Awake-Session-Metriken aus diesen Events
+2. Berechnung von Awake-Session- und ScreenTime-Metriken aus diesen Events
 3. Synchronisierung der berechneten Werte in Daily-Note-Frontmatter
 
 ## Komponenten
@@ -24,9 +24,11 @@ Das Modul kombiniert drei Schritte:
 ## Datenfluss
 
 1. `sleep-wake-to-file.sh` ruft `pmset -g log` auf und schreibt pro Datum ein Logfile.
-2. `screentime.awk` verarbeitet Sleep/Wake-Zeilen:
+2. `screentime.awk` verarbeitet Sleep/Wake- und Display-Notification-Zeilen:
    - Session-Start bei `Wake from Deep Idle` oder `DarkWake to FullWake from Deep Idle`
    - Session-Ende bei `Idle Sleep` bzw. Sleep-Ursachen ausser Maintenance/Sleep Service
+   - Screen-Session-Start bei `Display is turned on`
+   - Screen-Session-Ende bei `Display is turned off`
 3. `sync-daily-note-frontmatter.py` nutzt `awk -v output=kv` auf:
    - bevorzugt `sleep-wake-to-file/logs/pmset-sleep-wake_<date>.log`
    - fallback auf gefiltertes `pmset -g log`
@@ -38,7 +40,7 @@ Das Modul kombiniert drei Schritte:
 Human-Ausgabe:
 
 - Session-Zeilen `HH:MM:SS - HH:MM:SS: HH:MM`
-- Tageszusammenfassung mit `awakeSessionTime`, `firstOn`, `lastOff`, `duration`, `durationOff`, `Plausibility`
+- Tageszusammenfassung mit `awakeSessionTime`, `screenTime`, `firstOn`, `lastOff`, `duration`, `durationOff`, `Plausibility`
 
 KV-Ausgabe (`-v output=kv`):
 
@@ -49,6 +51,10 @@ KV-Ausgabe (`-v output=kv`):
 - `awakeSessionTime`
 - `session_count`
 - `plausibility`
+- `screenTime`
+- `firstScreenOn`
+- `lastScreenOff`
+- `screen_session_count`
 
 ## YAML-Mapping in Python
 
@@ -58,6 +64,9 @@ AWK -> Zielstruktur im Frontmatter:
 - `lastOff` -> `mac.lastOff`
 - `duration` -> `mac.duration`
 - `durationOff` -> `mac.durationOff`
+- `screenTime` -> `mac.screenTime`
+- `firstScreenOn` -> `mac.firstScreenOn`
+- `lastScreenOff` -> `mac.lastScreenOff`
 
 Initialisierung unter `worktime` (nur falls unset):
 
@@ -67,8 +76,8 @@ Initialisierung unter `worktime` (nur falls unset):
 
 Zeitnormalisierung:
 
-- `mac.firstOn`, `mac.lastOff`, `worktime.start`, `worktime.end` werden als `YYYY-MM-DDTHH:MM` geschrieben.
-- `mac.duration`, `mac.durationOff`, `worktime.break` werden als `HhMMm` geschrieben (z. B. `10h35m`).
+- `mac.firstOn`, `mac.lastOff`, `mac.firstScreenOn`, `mac.lastScreenOff`, `worktime.start`, `worktime.end` werden als `YYYY-MM-DDTHH:MM` geschrieben.
+- `mac.duration`, `mac.durationOff`, `mac.screenTime`, `worktime.break` werden als `HhMMm` geschrieben (z. B. `10h35m`).
 - Die AWK-KV-Durations bleiben `HH:MM`; die Umformatierung passiert erst im Python-Sync.
 
 ## Schreibregeln
@@ -90,4 +99,4 @@ Zeitnormalisierung:
 
 - Das Modul liefert eine praktikable Naeherung fuer Display-On-Zeiten auf Basis von `pmset`-Events.
 - Ein hardwaregenaues "Display wirklich an" Signal fuer alle Sonderfaelle ist damit nicht garantiert.
-- `sync-daily-note-frontmatter.py` beendet No-Session-Faelle bewusst mit Exit-Code `0`.
+- `sync-daily-note-frontmatter.py` beendet No-Session-Faelle (weder Awake- noch Screen-Sessions) bewusst mit Exit-Code `0`.
