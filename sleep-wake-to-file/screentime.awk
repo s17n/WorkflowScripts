@@ -102,7 +102,7 @@ END {
 
         if (breakSec < 0) {
             breakTimeText = "-" formatDuration(-breakSec);
-            plausibility = "WARN (screentime > duration)";
+            plausibility = "WARN (awakeSessionTime > duration)";
         } else {
             breakTimeText = formatDuration(breakSec);
             plausibility = "OK";
@@ -115,7 +115,7 @@ END {
             print "lastOff=" latestEndTime;
             print "duration=" formatDuration(worktimeSec);
             print "durationOff=" breakTimeText;
-            print "screentime=" totalText;
+            print "awakeSessionTime=" totalText;
             print "session_count=" sessionCount;
             print "plausibility=" plausibility;
         } else {
@@ -123,12 +123,12 @@ END {
             print "lastOff=-";
             print "duration=00:00";
             print "durationOff=00:00";
-            print "screentime=00:00";
+            print "awakeSessionTime=00:00";
             print "session_count=0";
             print "plausibility=n/a (keine Sessions)";
         }
     } else {
-        printf "Screentime: %s\n", totalText;
+        printf "awakeSessionTime: %s\n", totalText;
 
         if (sessionCount > 0) {
             printf "firstOn: %s\n", earliestStartTime;

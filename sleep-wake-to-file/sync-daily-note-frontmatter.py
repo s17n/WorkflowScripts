@@ -44,7 +44,7 @@ class SectionInfo:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Sync screentime metrics into daily-note frontmatter "
+            "Sync awake-session metrics into daily-note frontmatter "
             "(keys: mac.firstOn, mac.lastOff, mac.duration, mac.durationOff)."
         )
     )

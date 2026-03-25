@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Das Modul erfasst Sleep/Wake-Events ueber `pmset`, berechnet daraus taegliche Bildschirmzeiten und kann diese Werte in Daily-Notes schreiben.
+Das Modul erfasst Sleep/Wake-Events ueber `pmset`, berechnet daraus taegliche Awake-Session-Zeiten und kann diese Werte in Daily-Notes schreiben.
 
 Es gibt drei typische Nutzungsarten:
 
@@ -27,7 +27,7 @@ Hinweis:
 - Existierende Tageslogs werden nicht ueberschrieben.
 - Fuer eine lueckenlose Historie sollte das Skript mindestens einmal innerhalb von 6 Tagen laufen (typisch per cron).
 
-## 2) Screentime-Werte ausgeben
+## 2) Awake-Session-Werte ausgeben
 
 Direkt aus Live-Daten:
 
@@ -56,7 +56,7 @@ KV-Keys:
 - `lastOff`
 - `duration`
 - `durationOff`
-- `screentime`
+- `awakeSessionTime`
 - `session_count`
 - `plausibility`
 

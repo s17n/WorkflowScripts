@@ -5,7 +5,7 @@
 Das Modul kombiniert drei Schritte:
 
 1. Export von Sleep/Wake-Rohdaten aus `pmset` in Tageslogs
-2. Berechnung von Screentime-Metriken aus diesen Events
+2. Berechnung von Awake-Session-Metriken aus diesen Events
 3. Synchronisierung der berechneten Werte in Daily-Note-Frontmatter
 
 ## Komponenten
@@ -38,7 +38,7 @@ Das Modul kombiniert drei Schritte:
 Human-Ausgabe:
 
 - Session-Zeilen `HH:MM:SS - HH:MM:SS: HH:MM`
-- Tageszusammenfassung mit `Screentime`, `firstOn`, `lastOff`, `duration`, `durationOff`, `Plausibility`
+- Tageszusammenfassung mit `awakeSessionTime`, `firstOn`, `lastOff`, `duration`, `durationOff`, `Plausibility`
 
 KV-Ausgabe (`-v output=kv`):
 
@@ -46,7 +46,7 @@ KV-Ausgabe (`-v output=kv`):
 - `lastOff`
 - `duration`
 - `durationOff`
-- `screentime`
+- `awakeSessionTime`
 - `session_count`
 - `plausibility`
 
