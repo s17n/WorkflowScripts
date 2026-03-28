@@ -9,6 +9,7 @@ Es gibt drei typische Nutzungsarten:
 - Tageslogs erzeugen (`sleep-wake-to-file.sh`)
 - Werte anzeigen (`screentime.awk` oder `doc/Screentime - Report.md`)
 - Werte in YAML-Frontmatter synchronisieren (`sync-daily-note-frontmatter.py`)
+- Mehrere Tage im Batch synchronisieren (`sync-last-7-days.sh`, `sync-date-range.sh`)
 
 ## 1) Tageslogs erzeugen
 
@@ -142,3 +143,20 @@ Beispiel fuer `crontab` (taeglich um 01:30 Uhr):
 ```cron
 30 1 * * * /Users/steffen/Projects/WorkflowScripts/sleep-wake-to-file/sync-last-7-days.sh --daily-root "/Pfad/zu/DailyNotes" >> /tmp/sleep-wake-sync.log 2>&1
 ```
+
+## 5) Batch-Sync fuer eine Date-Range
+
+Das Wrapper-Skript ruft den Daily-Sync fuer alle Tage einer inklusiven Date-Range auf:
+
+```bash
+./sleep-wake-to-file/sync-date-range.sh \
+  --daily-root "/Pfad/zu/DailyNotes" \
+  --start-date "2026-03-01" \
+  --end-date "2026-03-07"
+```
+
+Hinweise:
+
+- `--start-date` und `--end-date` sind inklusive Grenzen.
+- Die Verarbeitung laeuft in aufsteigender Reihenfolge vom Start- zum Enddatum.
+- Bei einem Fehler fuer einen einzelnen Tag werden spaetere Tage trotzdem noch verarbeitet; der Gesamt-Exit-Code ist dann `1`.

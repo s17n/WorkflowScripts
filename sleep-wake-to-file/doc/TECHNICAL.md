@@ -18,6 +18,8 @@ Das Modul kombiniert drei Schritte:
   Schreibt Werte in Daily-Notes unter Beruecksichtigung von unset-Regeln.
 - `sleep-wake-to-file/sync-last-7-days.sh`
   Wrapper fuer den Batch-Sync der letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron.
+- `sleep-wake-to-file/sync-date-range.sh`
+  Wrapper fuer den Batch-Sync einer inklusiven Date-Range per CLI-Argumenten.
 - `sleep-wake-to-file/doc/Screentime - Report.md`
   Obsidian-Report-Snippet fuer Execute-Code.
 
@@ -34,6 +36,7 @@ Das Modul kombiniert drei Schritte:
    - fallback auf gefiltertes `pmset -g log`
 4. Python mappt die AWK-Werte in YAML und schreibt nur fehlende/ungefuellte Felder.
 5. `sync-last-7-days.sh` berechnet die Datumswerte `today-1` bis `today-7` und ruft den Python-Sync fuer jedes Datum auf.
+6. `sync-date-range.sh` validiert `--start-date` und `--end-date`, erzeugt daraus eine inklusive Liste von Datumswerten und ruft den Python-Sync fuer jedes Datum auf.
 
 ## AWK-Ausgabe
 
