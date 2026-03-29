@@ -8,15 +8,17 @@ syncScript="$scriptDir/sync-daily-note-frontmatter.py"
 usage() {
     cat <<'EOF'
 Usage:
-  ./sync-last-7-days.sh --daily-root "/Pfad/zu/DailyNotes"
+  ./sync-last-7-days.sh --daily-root "/Pfad/zu/DailyNotes" [--logs-root "/Pfad/zu/logs"]
 
 Beschreibung:
   Ruft sync-daily-note-frontmatter.py fuer die letzten 7 Tage auf
-  (ohne den aktuellen Tag).
+  (ohne den aktuellen Tag). Ohne --logs-root wird ./logs relativ zum
+  Modul verwendet.
 EOF
 }
 
 dailyRoot=""
+logsRoot=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -28,6 +30,15 @@ while [ $# -gt 0 ]; do
                 exit 1
             fi
             dailyRoot="$1"
+            ;;
+        --logs-root)
+            shift
+            if [ $# -eq 0 ]; then
+                echo "Fehler: --logs-root erwartet einen Pfad." >&2
+                usage >&2
+                exit 1
+            fi
+            logsRoot="$1"
             ;;
         -h|--help)
             usage
@@ -77,7 +88,11 @@ while IFS= read -r targetDate; do
     fi
     dateCount=$((dateCount + 1))
     printf "Sync date: %s\n" "$targetDate"
-    if ! python3 "$syncScript" --daily-root "$dailyRoot" --date "$targetDate"; then
+    syncArgs=(--daily-root "$dailyRoot" --date "$targetDate")
+    if [ -n "$logsRoot" ]; then
+        syncArgs+=(--logs-root "$logsRoot")
+    fi
+    if ! python3 "$syncScript" "${syncArgs[@]}"; then
         printf "Fehler: Sync fehlgeschlagen fuer %s\n" "$targetDate" >&2
         overallStatus=1
     fi

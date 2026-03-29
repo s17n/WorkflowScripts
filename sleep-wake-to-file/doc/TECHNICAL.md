@@ -11,32 +11,32 @@ Das Modul kombiniert drei Schritte:
 ## Komponenten
 
 - `sleep-wake-to-file/sleep-wake-to-file.sh`
-  Exportiert die letzten 6 Tage in `sleep-wake-to-file/logs/`.
+  Exportiert die letzten 6 Tage in `sleep-wake-to-file/logs/` oder ein per `--logs-root` konfiguriertes Log-Verzeichnis.
 - `sleep-wake-to-file/screentime.awk`
   Auswertung der Sessions und Ausgabe in Human- oder KV-Format.
 - `sleep-wake-to-file/sync-daily-note-frontmatter.py`
-  Schreibt Werte in Daily-Notes unter Beruecksichtigung von unset-Regeln.
+  Schreibt Werte in Daily-Notes unter Beruecksichtigung von unset-Regeln und liest Archivlogs optional aus `--logs-root`.
 - `sleep-wake-to-file/sync-last-7-days.sh`
-  Wrapper fuer den Batch-Sync der letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron.
+  Wrapper fuer den Batch-Sync der letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron, optional mit `--logs-root`.
 - `sleep-wake-to-file/sync-date-range.sh`
-  Wrapper fuer den Batch-Sync einer inklusiven Date-Range per CLI-Argumenten.
+  Wrapper fuer den Batch-Sync einer inklusiven Date-Range per CLI-Argumenten, optional mit `--logs-root`.
 - `sleep-wake-to-file/doc/Screentime - Report.md`
   Obsidian-Report-Snippet fuer Execute-Code.
 
 ## Datenfluss
 
-1. `sleep-wake-to-file.sh` ruft `pmset -g log` auf und schreibt pro Datum ein Logfile.
+1. `sleep-wake-to-file.sh` ruft `pmset -g log` auf und schreibt pro Datum ein Logfile in das Default- oder konfigurierte `logs`-Verzeichnis.
 2. `screentime.awk` verarbeitet Sleep/Wake- und Display-Notification-Zeilen:
    - Session-Start bei `Wake from Deep Idle` oder `DarkWake to FullWake from Deep Idle`
    - Session-Ende bei `Idle Sleep` bzw. Sleep-Ursachen ausser Maintenance/Sleep Service
    - Screen-Session-Start bei `Display is turned on`
    - Screen-Session-Ende bei `Display is turned off`
 3. `sync-daily-note-frontmatter.py` nutzt `awk -v output=kv` auf:
-   - bevorzugt `sleep-wake-to-file/logs/pmset-sleep-wake_<date>.log`
+   - bevorzugt `<logs-root>/pmset-sleep-wake_<date>.log`
    - fallback auf gefiltertes `pmset -g log`
 4. Python mappt die AWK-Werte in YAML und schreibt nur fehlende/ungefuellte Felder.
-5. `sync-last-7-days.sh` berechnet die Datumswerte `today-1` bis `today-7` und ruft den Python-Sync fuer jedes Datum auf.
-6. `sync-date-range.sh` validiert `--start-date` und `--end-date`, erzeugt daraus eine inklusive Liste von Datumswerten und ruft den Python-Sync fuer jedes Datum auf.
+5. `sync-last-7-days.sh` berechnet die Datumswerte `today-1` bis `today-7` und ruft den Python-Sync fuer jedes Datum auf, optional mit `--logs-root`.
+6. `sync-date-range.sh` validiert `--start-date` und `--end-date`, erzeugt daraus eine inklusive Liste von Datumswerten und ruft den Python-Sync fuer jedes Datum auf, optional mit `--logs-root`.
 
 ## AWK-Ausgabe
 
@@ -97,6 +97,12 @@ Zeitnormalisierung:
 - `awk`
 - `gdate` fuer den Collector (`sleep-wake-to-file.sh`)
 - Python 3 fuer `sync-daily-note-frontmatter.py`
+
+## Pfadauflosung
+
+- `sleep-wake-to-file.sh` verwendet ohne `--logs-root` den Default `sleep-wake-to-file/logs/`.
+- `sync-daily-note-frontmatter.py` verwendet ohne `--logs-root` ebenfalls `<workflow-root>/logs`.
+- `--logs-root` zeigt immer direkt auf das Verzeichnis mit Dateien `pmset-sleep-wake_YYYY-MM-DD.log`.
 
 ## Ist-Zustand und bekannte Grenzen
 

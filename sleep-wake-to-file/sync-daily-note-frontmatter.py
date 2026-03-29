@@ -76,6 +76,13 @@ def parse_args() -> argparse.Namespace:
         help="Path to sleep-wake-to-file module (defaults to this script directory).",
     )
     parser.add_argument(
+        "--logs-root",
+        help=(
+            "Path to the logs directory containing files like "
+            "pmset-sleep-wake_YYYY-MM-DD.log."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show computed values and field actions without writing files.",
@@ -96,6 +103,12 @@ def resolve_workflow_root(args: argparse.Namespace) -> Path:
     return Path(__file__).resolve().parent
 
 
+def resolve_logs_root(args: argparse.Namespace, workflow_root: Path) -> Path:
+    if args.logs_root:
+        return Path(args.logs_root).expanduser().resolve()
+    return workflow_root / "logs"
+
+
 def is_relevant_pmset_line(line: str, date_text: str) -> bool:
     if date_text not in line:
         return False
@@ -108,8 +121,8 @@ def is_relevant_pmset_line(line: str, date_text: str) -> bool:
     )
 
 
-def load_source_data(workflow_root: Path, date_text: str) -> SourceData:
-    log_path = workflow_root / "logs" / f"pmset-sleep-wake_{date_text}.log"
+def load_source_data(logs_root: Path, date_text: str) -> SourceData:
+    log_path = logs_root / f"pmset-sleep-wake_{date_text}.log"
     if log_path.exists():
         payload = log_path.read_text(encoding="utf-8")
         return SourceData(source_label=f"log:{log_path}", payload=payload)
@@ -402,10 +415,11 @@ def main() -> int:
     date_text = target_date.strftime("%Y-%m-%d")
 
     workflow_root = resolve_workflow_root(args)
+    logs_root = resolve_logs_root(args, workflow_root)
     daily_root = Path(args.daily_root).expanduser().resolve()
     daily_root.mkdir(parents=True, exist_ok=True)
 
-    source_data = load_source_data(workflow_root, date_text)
+    source_data = load_source_data(logs_root, date_text)
     metrics = run_awk_metrics(workflow_root / "screentime.awk", source_data.payload)
 
     session_count = parse_count(metrics, "session_count")

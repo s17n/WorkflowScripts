@@ -5,15 +5,15 @@ Ein Modul zum Erfassen und Auswerten von Sleep/Wake-Events aus `pmset` sowie zum
 Das Modul besteht aus:
 
 - `sleep-wake-to-file/sleep-wake-to-file.sh`
-  Exportiert Sleep/Wake-Events der letzten 6 Tage in Tages-Logs unter `sleep-wake-to-file/logs/`.
+  Exportiert Sleep/Wake-Events der letzten 6 Tage in Tages-Logs unter `sleep-wake-to-file/logs/` oder in ein per `--logs-root` konfiguriertes Log-Verzeichnis.
 - `sleep-wake-to-file/screentime.awk`
   Berechnet aus den Events die Session-Zeiten und Tagesmetriken.
 - `sleep-wake-to-file/sync-daily-note-frontmatter.py`
-  Schreibt die berechneten Werte in YAML-Frontmatter einer Daily Note.
+  Schreibt die berechneten Werte in YAML-Frontmatter einer Daily Note und kann Archivlogs aus einem konfigurierbaren `logs`-Verzeichnis lesen.
 - `sleep-wake-to-file/sync-last-7-days.sh`
-  Batch-Sync fuer die letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron.
+  Batch-Sync fuer die letzten 7 Tage (ohne aktuellen Tag), geeignet fuer cron, optional mit `--logs-root`.
 - `sleep-wake-to-file/sync-date-range.sh`
-  Batch-Sync fuer eine inklusive Date-Range per `--start-date` und `--end-date`.
+  Batch-Sync fuer eine inklusive Date-Range per `--start-date` und `--end-date`, optional mit `--logs-root`.
 - `sleep-wake-to-file/doc/Screentime - Report.md`
   Beispiel fuer die Auswertung direkt in Obsidian per Execute-Code-Plugin.
 

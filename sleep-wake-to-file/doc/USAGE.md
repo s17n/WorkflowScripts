@@ -17,10 +17,22 @@ Das Skript schreibt fuer die letzten 6 Tage (ohne aktuellen Tag) je eine Datei n
 
 - `sleep-wake-to-file/logs/pmset-sleep-wake_YYYY-MM-DD.log`
 
+Optional kann ein anderes Log-Verzeichnis angegeben werden:
+
+- `--logs-root "/Pfad/zu/logs"`
+- Der Pfad zeigt direkt auf das Verzeichnis mit Dateien wie `pmset-sleep-wake_YYYY-MM-DD.log`.
+
 Aufruf:
 
 ```bash
 ./sleep-wake-to-file/sleep-wake-to-file.sh
+```
+
+Mit eigenem Log-Verzeichnis:
+
+```bash
+./sleep-wake-to-file/sleep-wake-to-file.sh \
+  --logs-root "/Pfad/zu/logs"
 ```
 
 Hinweis:
@@ -71,6 +83,7 @@ Das Sync-Skript erwartet:
 
 - `--daily-root` als Basisordner der Daily Notes
 - `--date` im Format `YYYY-MM-DD`
+- optional `--logs-root` als Pfad zum Archivlog-Verzeichnis
 
 Dateischema:
 
@@ -82,6 +95,16 @@ Dry-Run (kein Dateischreiben):
 ./sleep-wake-to-file/sync-daily-note-frontmatter.py \
   --daily-root "/Pfad/zu/DailyNotes" \
   --date "2026-03-21" \
+  --dry-run
+```
+
+Dry-Run mit alternativem Log-Verzeichnis:
+
+```bash
+./sleep-wake-to-file/sync-daily-note-frontmatter.py \
+  --daily-root "/Pfad/zu/DailyNotes" \
+  --date "2026-03-21" \
+  --logs-root "/Pfad/zu/logs" \
   --dry-run
 ```
 
@@ -138,6 +161,14 @@ Das Wrapper-Skript ruft den Daily-Sync fuer die letzten 7 Tage auf (ohne den akt
   --daily-root "/Pfad/zu/DailyNotes"
 ```
 
+Mit alternativem Log-Verzeichnis:
+
+```bash
+./sleep-wake-to-file/sync-last-7-days.sh \
+  --daily-root "/Pfad/zu/DailyNotes" \
+  --logs-root "/Pfad/zu/logs"
+```
+
 Beispiel fuer `crontab` (taeglich um 01:30 Uhr):
 
 ```cron
@@ -155,8 +186,19 @@ Das Wrapper-Skript ruft den Daily-Sync fuer alle Tage einer inklusiven Date-Rang
   --end-date "2026-03-07"
 ```
 
+Mit alternativem Log-Verzeichnis:
+
+```bash
+./sleep-wake-to-file/sync-date-range.sh \
+  --daily-root "/Pfad/zu/DailyNotes" \
+  --start-date "2026-03-01" \
+  --end-date "2026-03-07" \
+  --logs-root "/Pfad/zu/logs"
+```
+
 Hinweise:
 
 - `--start-date` und `--end-date` sind inklusive Grenzen.
+- `--logs-root` zeigt direkt auf das Verzeichnis mit den Tageslogs.
 - Die Verarbeitung laeuft in aufsteigender Reihenfolge vom Start- zum Enddatum.
 - Bei einem Fehler fuer einen einzelnen Tag werden spaetere Tage trotzdem noch verarbeitet; der Gesamt-Exit-Code ist dann `1`.
