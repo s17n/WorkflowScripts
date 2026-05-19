@@ -33,6 +33,8 @@ etc.).
   Creates markdown meeting notes from calendar entries.
 - [DEVONthink CSS](./devonthink-css/README.md)  
   CSS profile for DEVONthink markdown rendering.
+- [Manage Volumes](./manage-volumes/README.md)  
+  Mounts, unmounts, or toggles configured volumes via `diskutil`.
 - [Sleep Wake to File](./sleep-wake-to-file/README.md)  
   Exports sleep/wake events, calculates screentime metrics, and syncs values
   into daily-note frontmatter.
